@@ -7,6 +7,8 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.syncope.client.http.PreemptiveAuthHttpRequestFactory;
 import org.apache.syncope.client.to.AttributeTO;
+import org.apache.syncope.client.to.SyncTaskTO;
+import org.apache.syncope.client.to.TaskExecTO;
 import org.apache.syncope.client.to.UserTO;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.web.client.RestTemplate;
@@ -86,6 +88,39 @@ public class App {
             throws Exception {
 
         init();
+
+        // Update sync task
+        SyncTaskTO task = restTemplate.getForObject(BASE_URL + "task/read/{taskId}", SyncTaskTO.class, 7);
+
+        //  add user template
+        UserTO template = new UserTO();
+
+        AttributeTO attrTO = new AttributeTO();
+        attrTO.setSchema("type");
+        attrTO.addValue("'type a'");
+        template.addAttribute(attrTO);
+
+        attrTO = new AttributeTO();
+        attrTO.setSchema("userId");
+        attrTO.addValue("'reconciled@syncope.apache.org'");
+        template.addAttribute(attrTO);
+
+        attrTO = new AttributeTO();
+        attrTO.setSchema("fullname");
+        attrTO.addValue("'reconciled fullname'");
+        template.addAttribute(attrTO);
+
+        attrTO = new AttributeTO();
+        attrTO.setSchema("surname");
+        attrTO.addValue("'surname'");
+        template.addAttribute(attrTO);
+
+        task.setUserTemplate(template);
+
+        SyncTaskTO actual = restTemplate.postForObject(BASE_URL + "task/update/sync", task, SyncTaskTO.class);
+
+        TaskExecTO execution = restTemplate.postForObject(BASE_URL + "task/execute/{taskId}", null, TaskExecTO.class,
+                actual.getId());
 
     }
 }

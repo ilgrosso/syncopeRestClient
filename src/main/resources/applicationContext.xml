@@ -20,7 +20,7 @@
   </bean>
   
   <bean id="baseURL" class="java.lang.String">
-    <constructor-arg value="${scheme}://${host}:${port}${rootPath}"/>
+    <constructor-arg value="${scheme}://${host}:${port}${path}"/>
   </bean>
 
   <bean id="jacksonObjectMapper" class="org.codehaus.jackson.map.ObjectMapper"/>
@@ -68,7 +68,7 @@
       </list>
     </property>
     <property name="errorHandler">
-      <bean id="syncopeClientErrorHandler" class="org.apache.syncope.common.validation.SyncopeClientErrorHandler"/>
+      <bean id="syncopeClientErrorHandler" class="org.apache.syncope.client.validation.SyncopeClientErrorHandler"/>
     </property>
   </bean>
 
