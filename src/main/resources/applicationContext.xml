@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd">
+  
+  <bean id="systemPropertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="order" value="1"/>
+    <property name="location" value="file:#{(systemProperties['syncope.console.configuration'])}"/>
+    <property name="ignoreResourceNotFound" value="true"/>
+    <property name="ignoreUnresolvablePlaceholders" value="true"/>
+  </bean>
+  <bean id="defaultPropertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="locations">
+      <list>
+        <value>classpath:configuration.properties</value>
+      </list>
+    </property>
+  </bean>
+  
+  <bean id="baseURL" class="java.lang.String">
+    <constructor-arg value="${scheme}://${host}:${port}${rootPath}"/>
+  </bean>
+
+  <bean id="jacksonObjectMapper" class="org.codehaus.jackson.map.ObjectMapper"/>
+
+  <bean id="mappingJacksonHttpMessageConverter" 
+        class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
+    <property name="objectMapper" ref="jacksonObjectMapper"/>
+  </bean>
+
+  <bean id="httpClientConnManager" class="org.apache.http.impl.conn.PoolingClientConnectionManager"/>
+
+  <bean id="httpClientParams" class="org.apache.syncope.client.http.HttpClientParams">
+    <property name="parameterMap">
+      <map key-type="java.lang.String">
+        <entry>
+          <key>
+            <value>http.protocol.handle-authentication</value>
+          </key>
+          <value type="java.lang.Boolean">false</value>
+        </entry>
+        <entry>
+          <key>
+            <value>http.auth.credential-charset</value>
+          </key>
+          <value type="java.lang.String">UTF-8</value>
+        </entry>
+      </map>
+    </property>
+  </bean>
+
+  <bean id="httpClientFactory" class="org.apache.syncope.client.http.PreemptiveAuthHttpRequestFactory"
+        scope="prototype">
+    <constructor-arg value="${host}"/>
+    <constructor-arg value="${port}"/>
+    <constructor-arg value="${scheme}"/>
+    <constructor-arg ref="httpClientConnManager"/>
+    <constructor-arg ref="httpClientParams"/>
+  </bean>
+
+  <bean id="restTemplate" class="org.springframework.web.client.RestTemplate">
+    <constructor-arg ref="httpClientFactory"/>
+    <property name="messageConverters">
+      <list>
+        <ref bean="mappingJacksonHttpMessageConverter"/>
+      </list>
+    </property>
+    <property name="errorHandler">
+      <bean id="syncopeClientErrorHandler" class="org.apache.syncope.common.validation.SyncopeClientErrorHandler"/>
+    </property>
+  </bean>
+
+</beans>
