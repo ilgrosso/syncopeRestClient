@@ -7,8 +7,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.syncope.client.http.PreemptiveAuthHttpRequestFactory;
 import org.apache.syncope.client.to.AttributeTO;
-import org.apache.syncope.client.to.SyncTaskTO;
-import org.apache.syncope.client.to.TaskExecTO;
+import org.apache.syncope.client.to.MembershipTO;
 import org.apache.syncope.client.to.UserTO;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.web.client.RestTemplate;
@@ -89,38 +88,15 @@ public class App {
 
         init();
 
-        // Update sync task
-        SyncTaskTO task = restTemplate.getForObject(BASE_URL + "task/read/{taskId}", SyncTaskTO.class, 7);
+        for (int i = 0; i < 10; i++) {
+            UserTO userTO = getSampleTO("syncope276." + i + "@syncope.apache.org");
 
-        //  add user template
-        UserTO template = new UserTO();
+            MembershipTO membershipTO = new MembershipTO();
+            membershipTO.setRoleId(7L);
+            userTO.addMembership(membershipTO);
 
-        AttributeTO attrTO = new AttributeTO();
-        attrTO.setSchema("type");
-        attrTO.addValue("'type a'");
-        template.addAttribute(attrTO);
-
-        attrTO = new AttributeTO();
-        attrTO.setSchema("userId");
-        attrTO.addValue("'reconciled@syncope.apache.org'");
-        template.addAttribute(attrTO);
-
-        attrTO = new AttributeTO();
-        attrTO.setSchema("fullname");
-        attrTO.addValue("'reconciled fullname'");
-        template.addAttribute(attrTO);
-
-        attrTO = new AttributeTO();
-        attrTO.setSchema("surname");
-        attrTO.addValue("'surname'");
-        template.addAttribute(attrTO);
-
-        task.setUserTemplate(template);
-
-        SyncTaskTO actual = restTemplate.postForObject(BASE_URL + "task/update/sync", task, SyncTaskTO.class);
-
-        TaskExecTO execution = restTemplate.postForObject(BASE_URL + "task/execute/{taskId}", null, TaskExecTO.class,
-                actual.getId());
-
+            userTO = restTemplate.postForObject(BASE_URL + "user/create", userTO, UserTO.class);
+            System.out.println(userTO.getUsername() + " created");
+        }
     }
 }
