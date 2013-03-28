@@ -32,6 +32,11 @@
 
   <bean id="httpClientConnManager" class="org.apache.http.impl.conn.PoolingClientConnectionManager"/>
 
+  <bean id="httpHostHeader" class="org.apache.http.message.BasicHeader">
+    <constructor-arg value="Host"/>
+    <constructor-arg value="${host}"/>
+  </bean>
+  
   <bean id="httpClientParams" class="org.apache.syncope.client.http.HttpClientParams">
     <property name="parameterMap">
       <map key-type="java.lang.String">
@@ -46,6 +51,14 @@
             <value>http.auth.credential-charset</value>
           </key>
           <value type="java.lang.String">UTF-8</value>
+        </entry>
+        <entry>
+          <key>
+            <value>http.default-headers</value>
+          </key>
+          <list>
+            <ref bean="httpHostHeader"/>
+          </list>
         </entry>
       </map>
     </property>

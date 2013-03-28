@@ -1,5 +1,7 @@
 package net.tirasa.syncoperestclient;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,6 +22,7 @@ import org.apache.syncope.client.services.proxy.SchemaServiceProxy;
 import org.apache.syncope.client.services.proxy.TaskServiceProxy;
 import org.apache.syncope.client.services.proxy.UserRequestServiceProxy;
 import org.apache.syncope.client.services.proxy.UserServiceProxy;
+import org.apache.syncope.client.services.proxy.UserWorkflowServiceProxy;
 import org.apache.syncope.client.services.proxy.WorkflowServiceProxy;
 import org.apache.syncope.common.mod.AttributeMod;
 import org.apache.syncope.common.services.ConfigurationService;
@@ -34,10 +37,14 @@ import org.apache.syncope.common.services.SchemaService;
 import org.apache.syncope.common.services.TaskService;
 import org.apache.syncope.common.services.UserRequestService;
 import org.apache.syncope.common.services.UserService;
+import org.apache.syncope.common.services.UserWorkflowService;
 import org.apache.syncope.common.services.WorkflowService;
 import org.apache.syncope.common.to.AttributeTO;
 import org.apache.syncope.common.to.RoleTO;
+import org.apache.syncope.common.to.TaskExecTO;
+import org.apache.syncope.common.to.TaskTO;
 import org.apache.syncope.common.to.UserTO;
+import org.apache.syncope.common.types.TaskType;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.web.client.RestTemplate;
 
@@ -75,6 +82,8 @@ public class App {
     private static SchemaService schemaService;
 
     private static UserRequestService userRequestService;
+
+    private static UserWorkflowService userWorkflowService;
 
     private static PolicyServiceProxy policyService;
 
@@ -160,6 +169,41 @@ public class App {
         notificationService = new NotificationServiceProxy(BASE_URL, restTemplate);
         schemaService = new SchemaServiceProxy(BASE_URL, restTemplate);
         userRequestService = new UserRequestServiceProxy(BASE_URL, restTemplate);
+        userWorkflowService = new UserWorkflowServiceProxy(BASE_URL, restTemplate);
+    }
+
+    private static TaskExecTO execSyncTask(final Long taskId, final int maxWaitSeconds,
+            final boolean dryRun) {
+
+        TaskTO taskTO = taskService.read(TaskType.SYNCHRONIZATION, taskId);
+        assertNotNull(taskTO);
+        assertNotNull(taskTO.getExecutions());
+
+        int preSyncSize = taskTO.getExecutions().size();
+        TaskExecTO execution = taskService.execute(taskTO.getId(), dryRun);
+        assertEquals("JOB_FIRED", execution.getStatus());
+
+        int i = 0;
+        int maxit = maxWaitSeconds;
+
+        // wait for sync completion (executions incremented)
+        do {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }
+
+            taskTO = taskService.read(TaskType.SYNCHRONIZATION, taskTO.getId());
+
+            assertNotNull(taskTO);
+            assertNotNull(taskTO.getExecutions());
+
+            i++;
+        } while (preSyncSize == taskTO.getExecutions().size() && i < maxit);
+        if (i == maxit) {
+            throw new RuntimeException("Timeout when executing task " + taskId);
+        }
+        return taskTO.getExecutions().get(0);
     }
 
     public static void main(final String[] args)
@@ -167,8 +211,6 @@ public class App {
 
         init();
 
-        System.out.println("AAAA\n"
-                + restTemplate.getForObject(BASE_URL + "user/request/create/allowed", Boolean.class));
-                //+ userRequestService.getOptions().getHeaderString(UserRequestService.SYNCOPE_CREATE_ALLOWED));
+        // *do* something
     }
 }
