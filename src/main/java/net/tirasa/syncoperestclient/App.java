@@ -6,6 +6,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
+import javax.ws.rs.core.Response;
+import org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean;
+import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.http.HttpStatus;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.syncope.client.http.PreemptiveAuthHttpRequestFactory;
@@ -30,6 +34,7 @@ import org.apache.syncope.common.services.ConnectorService;
 import org.apache.syncope.common.services.EntitlementService;
 import org.apache.syncope.common.services.LoggerService;
 import org.apache.syncope.common.services.NotificationService;
+import org.apache.syncope.common.services.PolicyService;
 import org.apache.syncope.common.services.ReportService;
 import org.apache.syncope.common.services.ResourceService;
 import org.apache.syncope.common.services.RoleService;
@@ -50,10 +55,16 @@ import org.springframework.web.client.RestTemplate;
 
 public class App {
 
+    private static final String ADMIN_ID = "admin";
+
+    private static final String ADMIN_PWD = "password";
+
     private static final ClassPathXmlApplicationContext CTX =
             new ClassPathXmlApplicationContext("applicationContext.xml");
 
-    private static final RestTemplate restTemplate = (RestTemplate) CTX.getBean("restTemplate");
+    private static final RestTemplate restTemplate = CTX.getBean(RestTemplate.class);
+
+    private static final JAXRSClientFactoryBean restClientFactory = CTX.getBean(JAXRSClientFactoryBean.class);
 
     private static final String BASE_URL = (String) CTX.getBean("baseURL");
 
@@ -85,7 +96,7 @@ public class App {
 
     private static UserWorkflowService userWorkflowService;
 
-    private static PolicyServiceProxy policyService;
+    private static PolicyService policyService;
 
     private static AttributeTO attributeTO(final String schema, final String value) {
         AttributeTO attr = new AttributeTO();
@@ -149,11 +160,11 @@ public class App {
         return userTO;
     }
 
-    private static final void init() {
+    private static final void initSpring() {
         PreemptiveAuthHttpRequestFactory requestFactory =
                 ((PreemptiveAuthHttpRequestFactory) restTemplate.getRequestFactory());
         ((DefaultHttpClient) requestFactory.getHttpClient()).getCredentialsProvider().setCredentials(
-                requestFactory.getAuthScope(), new UsernamePasswordCredentials("admin", "password"));
+                requestFactory.getAuthScope(), new UsernamePasswordCredentials(ADMIN_ID, ADMIN_PWD));
 
         userService = new UserServiceProxy(BASE_URL, restTemplate);
         roleService = new RoleServiceProxy(BASE_URL, restTemplate);
@@ -170,6 +181,33 @@ public class App {
         schemaService = new SchemaServiceProxy(BASE_URL, restTemplate);
         userRequestService = new UserRequestServiceProxy(BASE_URL, restTemplate);
         userWorkflowService = new UserWorkflowServiceProxy(BASE_URL, restTemplate);
+    }
+
+    private static <T> T createServiceInstance(final Class<T> serviceClass, final String username, final String password) {
+        restClientFactory.setUsername(username);
+        restClientFactory.setPassword(password);
+        restClientFactory.setServiceClass(serviceClass);
+        T serviceProxy = restClientFactory.create(serviceClass);
+        WebClient.client(serviceProxy).type("application/json").accept("application/json");
+        return serviceProxy;
+    }
+
+    private static void initCXF() {
+        userService = createServiceInstance(UserService.class, ADMIN_ID, ADMIN_PWD);
+        userWorkflowService = createServiceInstance(UserWorkflowService.class, ADMIN_ID, ADMIN_PWD);
+        roleService = createServiceInstance(RoleService.class, ADMIN_ID, ADMIN_PWD);
+        resourceService = createServiceInstance(ResourceService.class, ADMIN_ID, ADMIN_PWD);
+        entitlementService = createServiceInstance(EntitlementService.class, ADMIN_ID, ADMIN_PWD);
+        configurationService = createServiceInstance(ConfigurationService.class, ADMIN_ID, ADMIN_PWD);
+        connectorService = createServiceInstance(ConnectorService.class, ADMIN_ID, ADMIN_PWD);
+        loggerService = createServiceInstance(LoggerService.class, ADMIN_ID, ADMIN_PWD);
+        reportService = createServiceInstance(ReportService.class, ADMIN_ID, ADMIN_PWD);
+        taskService = createServiceInstance(TaskService.class, ADMIN_ID, ADMIN_PWD);
+        policyService = createServiceInstance(PolicyService.class, ADMIN_ID, ADMIN_PWD);
+        workflowService = createServiceInstance(WorkflowService.class, ADMIN_ID, ADMIN_PWD);
+        notificationService = createServiceInstance(NotificationService.class, ADMIN_ID, ADMIN_PWD);
+        schemaService = createServiceInstance(SchemaService.class, ADMIN_ID, ADMIN_PWD);
+        userRequestService = createServiceInstance(UserRequestService.class, ADMIN_ID, ADMIN_PWD);
     }
 
     private static TaskExecTO execSyncTask(final Long taskId, final int maxWaitSeconds,
@@ -206,10 +244,19 @@ public class App {
         return taskTO.getExecutions().get(0);
     }
 
+    private static UserTO createUser(final UserTO userTO) {
+        Response response = userService.create(userTO);
+        if (response.getStatus() != HttpStatus.SC_CREATED) {
+            throw new RuntimeException("Bad response: " + response);
+        }
+        return response.readEntity(UserTO.class);
+    }
+
     public static void main(final String[] args)
             throws Exception {
 
-        init();
+        initSpring();
+        // initCXF();
 
         // *do* something
     }

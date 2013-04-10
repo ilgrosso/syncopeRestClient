@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:cxf="http://cxf.apache.org/core"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
-                           http://www.springframework.org/schema/beans/spring-beans.xsd">
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://cxf.apache.org/jaxrs
+                           http://cxf.apache.org/schemas/jaxrs.xsd
+                           http://cxf.apache.org/core 
+                           http://cxf.apache.org/schemas/core.xsd
+                           http://www.springframework.org/schema/util 
+                           http://www.springframework.org/schema/util/spring-util.xsd">
   
   <bean id="systemPropertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
     <property name="order" value="1"/>
@@ -84,5 +92,48 @@
       <bean id="syncopeClientErrorHandler" class="org.apache.syncope.common.validation.SyncopeClientErrorHandler"/>
     </property>
   </bean>
+
+  <!-- CXF Configuration - BEGIN -->
+  <bean id="jaxbProvider" class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
+    <property name="depthProperties">
+      <bean id="depthProperties" class="org.apache.cxf.staxutils.DocumentDepthProperties">
+        <property name="innerElementCountThreshold" value="500"/>
+      </bean>
+    </property>
+    <property name="marshallerProperties">
+      <map>
+        <entry key="jaxb.formatted.output">
+          <value type="java.lang.Boolean">true</value>
+        </entry>
+      </map>
+    </property>
+  </bean>
+
+  <bean id="jsonProvider" class="org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider">
+    <property name="mapper" ref="jacksonObjectMapper"/>
+  </bean>
+
+  <bean id="exceptionMapper" class="org.apache.syncope.client.rest.utils.RestClientExceptionMapper"/>
+
+  <bean id="restClientFactory" class="org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean">
+    <property name="address" value="${scheme}://${host}:${port}/syncope/cxf"/>
+    <property name="threadSafe" value="true"/>
+    <property name="username" value="admin"/>
+    <property name="password" value="password"/>
+    <property name="inheritHeaders" value="true"/>
+    <property name="features">
+      <list>
+        <cxf:logging/>
+      </list>
+    </property>
+    <property name="providers">
+      <list>
+        <ref bean="jaxbProvider"/>
+        <ref bean="jsonProvider"/>
+        <ref bean="exceptionMapper"/>
+      </list>
+    </property>
+  </bean>
+  <!-- CXF Configuration - END -->
 
 </beans>
