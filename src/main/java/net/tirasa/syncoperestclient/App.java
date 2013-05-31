@@ -252,6 +252,14 @@ public class App {
         return response.readEntity(UserTO.class);
     }
 
+    private static RoleTO createRole(final RoleTO roleTO) {
+        Response response = roleService.create(roleTO);
+        if (response.getStatus() != HttpStatus.SC_CREATED) {
+            throw new RuntimeException("Bad response: " + response);
+        }
+        return response.readEntity(RoleTO.class);
+    }
+
     public static void main(final String[] args)
             throws Exception {
 
