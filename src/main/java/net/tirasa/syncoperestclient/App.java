@@ -2,10 +2,14 @@ package net.tirasa.syncoperestclient;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean;
 import org.apache.cxf.jaxrs.client.WebClient;
@@ -23,6 +27,7 @@ import org.apache.syncope.client.services.proxy.ReportServiceProxy;
 import org.apache.syncope.client.services.proxy.ResourceServiceProxy;
 import org.apache.syncope.client.services.proxy.RoleServiceProxy;
 import org.apache.syncope.client.services.proxy.SchemaServiceProxy;
+import org.apache.syncope.client.services.proxy.SpringServiceProxy;
 import org.apache.syncope.client.services.proxy.TaskServiceProxy;
 import org.apache.syncope.client.services.proxy.UserRequestServiceProxy;
 import org.apache.syncope.client.services.proxy.UserServiceProxy;
@@ -50,7 +55,10 @@ import org.apache.syncope.common.to.TaskExecTO;
 import org.apache.syncope.common.to.TaskTO;
 import org.apache.syncope.common.to.UserTO;
 import org.apache.syncope.common.types.TaskType;
+import org.apache.syncope.common.validation.SyncopeClientErrorHandler;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJacksonHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 public class App {
@@ -67,6 +75,12 @@ public class App {
     private static final JAXRSClientFactoryBean restClientFactory = CTX.getBean(JAXRSClientFactoryBean.class);
 
     private static final String BASE_URL = (String) CTX.getBean("baseURL");
+
+    private static final MappingJacksonHttpMessageConverter mappingJacksonHttpMessageConverter =
+            CTX.getBean(MappingJacksonHttpMessageConverter.class);
+
+    private static final PreemptiveAuthHttpRequestFactory httpClientFactory =
+            CTX.getBean(PreemptiveAuthHttpRequestFactory.class);
 
     private static UserService userService;
 
@@ -158,6 +172,48 @@ public class App {
         userTO.addDerivedAttribute(attributeTO("cn", null));
         userTO.addVirtualAttribute(attributeTO("virtualdata", "virtualvalue"));
         return userTO;
+    }
+
+    public static UserTO getUniqueSampleTO(final String email) {
+        return getSampleTO(getUUIDString() + email);
+    }
+
+    private static void setupRestTemplate(final String uid, final String pwd) {
+        PreemptiveAuthHttpRequestFactory requestFactory = ((PreemptiveAuthHttpRequestFactory) restTemplate
+                .getRequestFactory());
+
+        ((DefaultHttpClient) requestFactory.getHttpClient()).getCredentialsProvider().setCredentials(
+                requestFactory.getAuthScope(), new UsernamePasswordCredentials(uid, pwd));
+    }
+
+    private static RestTemplate getAnonymousRestTemplate() {
+        RestTemplate template = new RestTemplate(httpClientFactory);
+        List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
+        converters.add(mappingJacksonHttpMessageConverter);
+        template.setMessageConverters(converters);
+        template.setErrorHandler(new SyncopeClientErrorHandler());
+        return template;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T setupCredentials(final T proxy, final Class<?> serviceInterface, final String username,
+            final String password) {
+        if (proxy instanceof SpringServiceProxy) {
+            SpringServiceProxy service = (SpringServiceProxy) proxy;
+            if (username == null && password == null) {
+                service.setRestTemplate(getAnonymousRestTemplate());
+            } else {
+                setupRestTemplate(username, password);
+            }
+            return proxy;
+        } else {
+            restClientFactory.setUsername(username);
+            restClientFactory.setPassword(password);
+            restClientFactory.setServiceClass(serviceInterface);
+            T serviceProxy = (T) restClientFactory.create(serviceInterface);
+            WebClient.client(serviceProxy).accept(MediaType.APPLICATION_XML).type(MediaType.APPLICATION_XML);
+            return serviceProxy;
+        }
     }
 
     private static final void initSpring() {
