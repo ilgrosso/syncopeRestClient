@@ -5,34 +5,13 @@ import static org.junit.Assert.assertNotNull;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.http.HttpStatus;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.syncope.client.http.PreemptiveAuthHttpRequestFactory;
-import org.apache.syncope.client.services.proxy.ConfigurationServiceProxy;
-import org.apache.syncope.client.services.proxy.ConnectorServiceProxy;
-import org.apache.syncope.client.services.proxy.EntitlementServiceProxy;
-import org.apache.syncope.client.services.proxy.LoggerServiceProxy;
-import org.apache.syncope.client.services.proxy.NotificationServiceProxy;
-import org.apache.syncope.client.services.proxy.PolicyServiceProxy;
-import org.apache.syncope.client.services.proxy.ReportServiceProxy;
-import org.apache.syncope.client.services.proxy.ResourceServiceProxy;
-import org.apache.syncope.client.services.proxy.RoleServiceProxy;
-import org.apache.syncope.client.services.proxy.SchemaServiceProxy;
-import org.apache.syncope.client.services.proxy.SpringServiceProxy;
-import org.apache.syncope.client.services.proxy.TaskServiceProxy;
-import org.apache.syncope.client.services.proxy.UserRequestServiceProxy;
-import org.apache.syncope.client.services.proxy.UserServiceProxy;
-import org.apache.syncope.client.services.proxy.UserWorkflowServiceProxy;
-import org.apache.syncope.client.services.proxy.WorkflowServiceProxy;
 import org.apache.syncope.common.mod.AttributeMod;
 import org.apache.syncope.common.services.ConfigurationService;
 import org.apache.syncope.common.services.ConnectorService;
@@ -55,11 +34,7 @@ import org.apache.syncope.common.to.TaskExecTO;
 import org.apache.syncope.common.to.TaskTO;
 import org.apache.syncope.common.to.UserTO;
 import org.apache.syncope.common.types.TaskType;
-import org.apache.syncope.common.validation.SyncopeClientErrorHandler;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJacksonHttpMessageConverter;
-import org.springframework.web.client.RestTemplate;
 
 public class App {
 
@@ -70,17 +45,7 @@ public class App {
     private static final ClassPathXmlApplicationContext CTX =
             new ClassPathXmlApplicationContext("applicationContext.xml");
 
-    private static final RestTemplate restTemplate = CTX.getBean(RestTemplate.class);
-
     private static final JAXRSClientFactoryBean restClientFactory = CTX.getBean(JAXRSClientFactoryBean.class);
-
-    private static final String BASE_URL = (String) CTX.getBean("baseURL");
-
-    private static final MappingJacksonHttpMessageConverter mappingJacksonHttpMessageConverter =
-            CTX.getBean(MappingJacksonHttpMessageConverter.class);
-
-    private static final PreemptiveAuthHttpRequestFactory httpClientFactory =
-            CTX.getBean(PreemptiveAuthHttpRequestFactory.class);
 
     private static UserService userService;
 
@@ -156,8 +121,8 @@ public class App {
     }
 
     public static UserTO getSampleTO(final String email) {
-        String uid = email;
-        UserTO userTO = new UserTO();
+        final String uid = email;
+        final UserTO userTO = new UserTO();
         userTO.setPassword("password123");
         userTO.setUsername(uid);
 
@@ -167,88 +132,46 @@ public class App {
         userTO.addAttribute(attributeTO("type", "a type"));
         userTO.addAttribute(attributeTO("userId", uid));
         userTO.addAttribute(attributeTO("email", uid));
-        DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        final DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         userTO.addAttribute(attributeTO("loginDate", sdf.format(new Date())));
         userTO.addDerivedAttribute(attributeTO("cn", null));
         userTO.addVirtualAttribute(attributeTO("virtualdata", "virtualvalue"));
         return userTO;
     }
 
-    public static UserTO getUniqueSampleTO(final String email) {
+    private static UserTO getUniqueSampleTO(final String email) {
         return getSampleTO(getUUIDString() + email);
     }
 
-    private static void setupRestTemplate(final String uid, final String pwd) {
-        PreemptiveAuthHttpRequestFactory requestFactory = ((PreemptiveAuthHttpRequestFactory) restTemplate
-                .getRequestFactory());
+    private static <T> T getObject(final Response response, final Class<T> type, final Object serviceProxy) {
+        String location = response.getLocation().toString();
+        WebClient webClient = WebClient.fromClient(WebClient.client(serviceProxy));
+        webClient.to(location, false);
 
-        ((DefaultHttpClient) requestFactory.getHttpClient()).getCredentialsProvider().setCredentials(
-                requestFactory.getAuthScope(), new UsernamePasswordCredentials(uid, pwd));
-    }
-
-    private static RestTemplate getAnonymousRestTemplate() {
-        RestTemplate template = new RestTemplate(httpClientFactory);
-        List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
-        converters.add(mappingJacksonHttpMessageConverter);
-        template.setMessageConverters(converters);
-        template.setErrorHandler(new SyncopeClientErrorHandler());
-        return template;
+        return webClient.get(type);
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> T setupCredentials(final T proxy, final Class<?> serviceInterface, final String username,
-            final String password) {
-        if (proxy instanceof SpringServiceProxy) {
-            SpringServiceProxy service = (SpringServiceProxy) proxy;
-            if (username == null && password == null) {
-                service.setRestTemplate(getAnonymousRestTemplate());
-            } else {
-                setupRestTemplate(username, password);
-            }
-            return proxy;
-        } else {
-            restClientFactory.setUsername(username);
-            restClientFactory.setPassword(password);
-            restClientFactory.setServiceClass(serviceInterface);
-            T serviceProxy = (T) restClientFactory.create(serviceInterface);
-            WebClient.client(serviceProxy).accept(MediaType.APPLICATION_XML).type(MediaType.APPLICATION_XML);
-            return serviceProxy;
-        }
-    }
-
-    private static final void initSpring() {
-        PreemptiveAuthHttpRequestFactory requestFactory =
-                ((PreemptiveAuthHttpRequestFactory) restTemplate.getRequestFactory());
-        ((DefaultHttpClient) requestFactory.getHttpClient()).getCredentialsProvider().setCredentials(
-                requestFactory.getAuthScope(), new UsernamePasswordCredentials(ADMIN_ID, ADMIN_PWD));
-
-        userService = new UserServiceProxy(BASE_URL, restTemplate);
-        roleService = new RoleServiceProxy(BASE_URL, restTemplate);
-        resourceService = new ResourceServiceProxy(BASE_URL, restTemplate);
-        entitlementService = new EntitlementServiceProxy(BASE_URL, restTemplate);
-        configurationService = new ConfigurationServiceProxy(BASE_URL, restTemplate);
-        connectorService = new ConnectorServiceProxy(BASE_URL, restTemplate);
-        loggerService = new LoggerServiceProxy(BASE_URL, restTemplate);
-        reportService = new ReportServiceProxy(BASE_URL, restTemplate);
-        taskService = new TaskServiceProxy(BASE_URL, restTemplate);
-        policyService = new PolicyServiceProxy(BASE_URL, restTemplate);
-        workflowService = new WorkflowServiceProxy(BASE_URL, restTemplate);
-        notificationService = new NotificationServiceProxy(BASE_URL, restTemplate);
-        schemaService = new SchemaServiceProxy(BASE_URL, restTemplate);
-        userRequestService = new UserRequestServiceProxy(BASE_URL, restTemplate);
-        userWorkflowService = new UserWorkflowServiceProxy(BASE_URL, restTemplate);
+    private static <T> T setupCredentials(final T proxy, final Class<?> serviceInterface,
+            final String username, final String password) {
+        restClientFactory.setUsername(username);
+        restClientFactory.setPassword(password);
+        restClientFactory.setServiceClass(serviceInterface);
+        final T serviceProxy = (T) restClientFactory.create(serviceInterface);
+        WebClient.client(serviceProxy).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON);
+        return serviceProxy;
     }
 
     private static <T> T createServiceInstance(final Class<T> serviceClass, final String username, final String password) {
         restClientFactory.setUsername(username);
         restClientFactory.setPassword(password);
         restClientFactory.setServiceClass(serviceClass);
-        T serviceProxy = restClientFactory.create(serviceClass);
-        WebClient.client(serviceProxy).type("application/json").accept("application/json");
+        final T serviceProxy = restClientFactory.create(serviceClass);
+        WebClient.client(serviceProxy).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON);
         return serviceProxy;
     }
 
-    private static void initCXF() {
+    private static void init() {
         userService = createServiceInstance(UserService.class, ADMIN_ID, ADMIN_PWD);
         userWorkflowService = createServiceInstance(UserWorkflowService.class, ADMIN_ID, ADMIN_PWD);
         roleService = createServiceInstance(RoleService.class, ADMIN_ID, ADMIN_PWD);
@@ -273,8 +196,8 @@ public class App {
         assertNotNull(taskTO);
         assertNotNull(taskTO.getExecutions());
 
-        int preSyncSize = taskTO.getExecutions().size();
-        TaskExecTO execution = taskService.execute(taskTO.getId(), dryRun);
+        final int preSyncSize = taskTO.getExecutions().size();
+        final TaskExecTO execution = taskService.execute(taskTO.getId(), dryRun);
         assertEquals("JOB_FIRED", execution.getStatus());
 
         int i = 0;
@@ -301,7 +224,7 @@ public class App {
     }
 
     private static UserTO createUser(final UserTO userTO) {
-        Response response = userService.create(userTO);
+        final Response response = userService.create(userTO);
         if (response.getStatus() != HttpStatus.SC_CREATED) {
             throw new RuntimeException("Bad response: " + response);
         }
@@ -309,7 +232,7 @@ public class App {
     }
 
     private static RoleTO createRole(final RoleTO roleTO) {
-        Response response = roleService.create(roleTO);
+        final Response response = roleService.create(roleTO);
         if (response.getStatus() != HttpStatus.SC_CREATED) {
             throw new RuntimeException("Bad response: " + response);
         }
@@ -319,9 +242,7 @@ public class App {
     public static void main(final String[] args)
             throws Exception {
 
-        initSpring();
-        // initCXF();
-
+        init();
         // *do* something
     }
 }

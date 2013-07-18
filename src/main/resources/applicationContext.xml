@@ -26,74 +26,7 @@
       </list>
     </property>
   </bean>
-  
-  <bean id="baseURL" class="java.lang.String">
-    <constructor-arg value="${scheme}://${host}:${port}${rootPath}"/>
-  </bean>
 
-  <bean id="jacksonObjectMapper" class="org.codehaus.jackson.map.ObjectMapper"/>
-
-  <bean id="mappingJacksonHttpMessageConverter" 
-        class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
-    <property name="objectMapper" ref="jacksonObjectMapper"/>
-  </bean>
-
-  <bean id="httpClientConnManager" class="org.apache.http.impl.conn.PoolingClientConnectionManager"/>
-
-  <bean id="httpHostHeader" class="org.apache.http.message.BasicHeader">
-    <constructor-arg value="Host"/>
-    <constructor-arg value="${host}"/>
-  </bean>
-  
-  <bean id="httpClientParams" class="org.apache.syncope.client.http.HttpClientParams">
-    <property name="parameterMap">
-      <map key-type="java.lang.String">
-        <entry>
-          <key>
-            <value>http.protocol.handle-authentication</value>
-          </key>
-          <value type="java.lang.Boolean">false</value>
-        </entry>
-        <entry>
-          <key>
-            <value>http.auth.credential-charset</value>
-          </key>
-          <value type="java.lang.String">UTF-8</value>
-        </entry>
-        <entry>
-          <key>
-            <value>http.default-headers</value>
-          </key>
-          <list>
-            <ref bean="httpHostHeader"/>
-          </list>
-        </entry>
-      </map>
-    </property>
-  </bean>
-
-  <bean id="httpClientFactory" class="org.apache.syncope.client.http.PreemptiveAuthHttpRequestFactory"
-        scope="prototype">
-    <constructor-arg value="${host}"/>
-    <constructor-arg value="${port}"/>
-    <constructor-arg value="${scheme}"/>
-    <constructor-arg ref="httpClientConnManager"/>
-    <constructor-arg ref="httpClientParams"/>
-  </bean>
-
-  <bean id="restTemplate" class="org.springframework.web.client.RestTemplate">
-    <constructor-arg ref="httpClientFactory"/>
-    <property name="messageConverters">
-      <list>
-        <ref bean="mappingJacksonHttpMessageConverter"/>
-      </list>
-    </property>
-    <property name="errorHandler">
-      <bean id="syncopeClientErrorHandler" class="org.apache.syncope.common.validation.SyncopeClientErrorHandler"/>
-    </property>
-  </bean>
-
-  <!-- CXF Configuration - BEGIN -->
   <bean id="jaxbProvider" class="org.apache.cxf.jaxrs.provider.JAXBElementProvider">
     <property name="depthProperties">
       <bean id="depthProperties" class="org.apache.cxf.staxutils.DocumentDepthProperties">
@@ -107,16 +40,24 @@
         </entry>
       </map>
     </property>
+    <property name="collectionWrapperMap">
+      <map>
+        <entry>
+          <key>
+            <value>org.apache.syncope.common.to.PolicyTO</value>
+          </key>
+          <value>policies</value>
+        </entry>
+      </map>
+    </property>
   </bean>
 
-  <bean id="jsonProvider" class="org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider">
-    <property name="mapper" ref="jacksonObjectMapper"/>
-  </bean>
+  <bean id="jsonProvider" class="com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider"/>
 
   <bean id="exceptionMapper" class="org.apache.syncope.client.rest.utils.RestClientExceptionMapper"/>
 
   <bean id="restClientFactory" class="org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean">
-    <property name="address" value="${scheme}://${host}:${port}/syncope/cxf"/>
+    <property name="address" value="${scheme}://${host}:${port}/${rootPath}"/>
     <property name="threadSafe" value="true"/>
     <property name="username" value="admin"/>
     <property name="password" value="password"/>
@@ -134,6 +75,5 @@
       </list>
     </property>
   </bean>
-  <!-- CXF Configuration - END -->
 
 </beans>
