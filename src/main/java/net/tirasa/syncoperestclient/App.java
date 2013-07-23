@@ -7,11 +7,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.http.HttpStatus;
+import org.apache.syncope.client.rest.RestClientFactoryBean;
 import org.apache.syncope.common.mod.AttributeMod;
 import org.apache.syncope.common.services.ConfigurationService;
 import org.apache.syncope.common.services.ConnectorService;
@@ -45,7 +44,7 @@ public class App {
     private static final ClassPathXmlApplicationContext CTX =
             new ClassPathXmlApplicationContext("applicationContext.xml");
 
-    private static final JAXRSClientFactoryBean restClientFactory = CTX.getBean(JAXRSClientFactoryBean.class);
+    private static final RestClientFactoryBean restClientFactory = CTX.getBean(RestClientFactoryBean.class);
 
     private static UserService userService;
 
@@ -151,42 +150,22 @@ public class App {
         return webClient.get(type);
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T setupCredentials(final T proxy, final Class<?> serviceInterface,
-            final String username, final String password) {
-        restClientFactory.setUsername(username);
-        restClientFactory.setPassword(password);
-        restClientFactory.setServiceClass(serviceInterface);
-        final T serviceProxy = (T) restClientFactory.create(serviceInterface);
-        WebClient.client(serviceProxy).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON);
-        return serviceProxy;
-    }
-
-    private static <T> T createServiceInstance(final Class<T> serviceClass, final String username, final String password) {
-        restClientFactory.setUsername(username);
-        restClientFactory.setPassword(password);
-        restClientFactory.setServiceClass(serviceClass);
-        final T serviceProxy = restClientFactory.create(serviceClass);
-        WebClient.client(serviceProxy).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON);
-        return serviceProxy;
-    }
-
     private static void init() {
-        userService = createServiceInstance(UserService.class, ADMIN_ID, ADMIN_PWD);
-        userWorkflowService = createServiceInstance(UserWorkflowService.class, ADMIN_ID, ADMIN_PWD);
-        roleService = createServiceInstance(RoleService.class, ADMIN_ID, ADMIN_PWD);
-        resourceService = createServiceInstance(ResourceService.class, ADMIN_ID, ADMIN_PWD);
-        entitlementService = createServiceInstance(EntitlementService.class, ADMIN_ID, ADMIN_PWD);
-        configurationService = createServiceInstance(ConfigurationService.class, ADMIN_ID, ADMIN_PWD);
-        connectorService = createServiceInstance(ConnectorService.class, ADMIN_ID, ADMIN_PWD);
-        loggerService = createServiceInstance(LoggerService.class, ADMIN_ID, ADMIN_PWD);
-        reportService = createServiceInstance(ReportService.class, ADMIN_ID, ADMIN_PWD);
-        taskService = createServiceInstance(TaskService.class, ADMIN_ID, ADMIN_PWD);
-        policyService = createServiceInstance(PolicyService.class, ADMIN_ID, ADMIN_PWD);
-        workflowService = createServiceInstance(WorkflowService.class, ADMIN_ID, ADMIN_PWD);
-        notificationService = createServiceInstance(NotificationService.class, ADMIN_ID, ADMIN_PWD);
-        schemaService = createServiceInstance(SchemaService.class, ADMIN_ID, ADMIN_PWD);
-        userRequestService = createServiceInstance(UserRequestService.class, ADMIN_ID, ADMIN_PWD);
+        userService = restClientFactory.createServiceInstance(UserService.class, ADMIN_ID, ADMIN_PWD);
+        userWorkflowService = restClientFactory.createServiceInstance(UserWorkflowService.class, ADMIN_ID, ADMIN_PWD);
+        roleService = restClientFactory.createServiceInstance(RoleService.class, ADMIN_ID, ADMIN_PWD);
+        resourceService = restClientFactory.createServiceInstance(ResourceService.class, ADMIN_ID, ADMIN_PWD);
+        entitlementService = restClientFactory.createServiceInstance(EntitlementService.class, ADMIN_ID, ADMIN_PWD);
+        configurationService = restClientFactory.createServiceInstance(ConfigurationService.class, ADMIN_ID, ADMIN_PWD);
+        connectorService = restClientFactory.createServiceInstance(ConnectorService.class, ADMIN_ID, ADMIN_PWD);
+        loggerService = restClientFactory.createServiceInstance(LoggerService.class, ADMIN_ID, ADMIN_PWD);
+        reportService = restClientFactory.createServiceInstance(ReportService.class, ADMIN_ID, ADMIN_PWD);
+        taskService = restClientFactory.createServiceInstance(TaskService.class, ADMIN_ID, ADMIN_PWD);
+        policyService = restClientFactory.createServiceInstance(PolicyService.class, ADMIN_ID, ADMIN_PWD);
+        workflowService = restClientFactory.createServiceInstance(WorkflowService.class, ADMIN_ID, ADMIN_PWD);
+        notificationService = restClientFactory.createServiceInstance(NotificationService.class, ADMIN_ID, ADMIN_PWD);
+        schemaService = restClientFactory.createServiceInstance(SchemaService.class, ADMIN_ID, ADMIN_PWD);
+        userRequestService = restClientFactory.createServiceInstance(UserRequestService.class, ADMIN_ID, ADMIN_PWD);
     }
 
     private static TaskExecTO execSyncTask(final Long taskId, final int maxWaitSeconds,
