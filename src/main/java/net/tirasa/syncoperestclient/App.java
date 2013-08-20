@@ -30,9 +30,8 @@ import org.apache.syncope.common.services.WorkflowService;
 import org.apache.syncope.common.to.AttributeTO;
 import org.apache.syncope.common.to.RoleTO;
 import org.apache.syncope.common.to.TaskExecTO;
-import org.apache.syncope.common.to.TaskTO;
+import org.apache.syncope.common.to.AbstractTaskTO;
 import org.apache.syncope.common.to.UserTO;
-import org.apache.syncope.common.types.TaskType;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class App {
@@ -79,14 +78,14 @@ public class App {
     private static AttributeTO attributeTO(final String schema, final String value) {
         AttributeTO attr = new AttributeTO();
         attr.setSchema(schema);
-        attr.addValue(value);
+        attr.getValues().add(value);
         return attr;
     }
 
     private static AttributeMod attributeMod(final String schema, final String valueToBeAdded) {
         AttributeMod attr = new AttributeMod();
         attr.setSchema(schema);
-        attr.addValueToBeAdded(valueToBeAdded);
+        attr.getValuesToBeAdded().add(valueToBeAdded);
         return attr;
     }
 
@@ -113,9 +112,9 @@ public class App {
         // inherited so setter execution should be ignored
         roleTO.setPasswordPolicy(2L);
 
-        roleTO.addAttribute(attributeTO("icon", "anIcon"));
+        roleTO.getAttributes().add(attributeTO("icon", "anIcon"));
 
-        roleTO.addResource("resource-ldap");
+        roleTO.getResources().add("resource-ldap");
         return roleTO;
     }
 
@@ -125,16 +124,16 @@ public class App {
         userTO.setPassword("password123");
         userTO.setUsername(uid);
 
-        userTO.addAttribute(attributeTO("fullname", uid));
-        userTO.addAttribute(attributeTO("firstname", uid));
-        userTO.addAttribute(attributeTO("surname", "surname"));
-        userTO.addAttribute(attributeTO("type", "a type"));
-        userTO.addAttribute(attributeTO("userId", uid));
-        userTO.addAttribute(attributeTO("email", uid));
+        userTO.getAttributes().add(attributeTO("fullname", uid));
+        userTO.getAttributes().add(attributeTO("firstname", uid));
+        userTO.getAttributes().add(attributeTO("surname", "surname"));
+        userTO.getAttributes().add(attributeTO("type", "a type"));
+        userTO.getAttributes().add(attributeTO("userId", uid));
+        userTO.getAttributes().add(attributeTO("email", uid));
         final DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        userTO.addAttribute(attributeTO("loginDate", sdf.format(new Date())));
-        userTO.addDerivedAttribute(attributeTO("cn", null));
-        userTO.addVirtualAttribute(attributeTO("virtualdata", "virtualvalue"));
+        userTO.getAttributes().add(attributeTO("loginDate", sdf.format(new Date())));
+        userTO.getDerivedAttributes().add(attributeTO("cn", null));
+        userTO.getVirtualAttributes().add(attributeTO("virtualdata", "virtualvalue"));
         return userTO;
     }
 
@@ -171,7 +170,7 @@ public class App {
     private static TaskExecTO execSyncTask(final Long taskId, final int maxWaitSeconds,
             final boolean dryRun) {
 
-        TaskTO taskTO = taskService.read(TaskType.SYNCHRONIZATION, taskId);
+        AbstractTaskTO taskTO = taskService.read(taskId);
         assertNotNull(taskTO);
         assertNotNull(taskTO.getExecutions());
 
@@ -189,7 +188,7 @@ public class App {
             } catch (InterruptedException e) {
             }
 
-            taskTO = taskService.read(TaskType.SYNCHRONIZATION, taskTO.getId());
+            taskTO = taskService.read(taskTO.getId());
 
             assertNotNull(taskTO);
             assertNotNull(taskTO.getExecutions());
