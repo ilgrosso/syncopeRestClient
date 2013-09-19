@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
 import org.apache.cxf.jaxrs.client.WebClient;
-import org.apache.http.HttpStatus;
 import org.apache.syncope.client.rest.RestClientFactoryBean;
 import org.apache.syncope.common.mod.AttributeMod;
 import org.apache.syncope.common.services.ConfigurationService;
@@ -32,6 +31,7 @@ import org.apache.syncope.common.to.RoleTO;
 import org.apache.syncope.common.to.TaskExecTO;
 import org.apache.syncope.common.to.AbstractTaskTO;
 import org.apache.syncope.common.to.UserTO;
+import org.apache.syncope.common.types.LoggerType;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class App {
@@ -203,7 +203,7 @@ public class App {
 
     private static UserTO createUser(final UserTO userTO) {
         final Response response = userService.create(userTO);
-        if (response.getStatus() != HttpStatus.SC_CREATED) {
+        if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
             throw new RuntimeException("Bad response: " + response);
         }
         return response.readEntity(UserTO.class);
@@ -211,7 +211,7 @@ public class App {
 
     private static RoleTO createRole(final RoleTO roleTO) {
         final Response response = roleService.create(roleTO);
-        if (response.getStatus() != HttpStatus.SC_CREATED) {
+        if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
             throw new RuntimeException("Bad response: " + response);
         }
         return response.readEntity(RoleTO.class);
@@ -222,5 +222,7 @@ public class App {
 
         init();
         // *do* something
+        System.out.println("FFFFFF\n" + loggerService.list(LoggerType.LOG));
+
     }
 }
