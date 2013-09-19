@@ -1,89 +1,64 @@
 package net.tirasa.syncoperestclient;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Properties;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
-import org.apache.cxf.jaxrs.client.WebClient;
-import org.apache.syncope.client.rest.RestClientFactoryBean;
+import org.apache.syncope.client.SyncopeClient;
+import org.apache.syncope.client.SyncopeClientFactoryBean;
 import org.apache.syncope.common.mod.AttributeMod;
-import org.apache.syncope.common.services.ConfigurationService;
-import org.apache.syncope.common.services.ConnectorService;
-import org.apache.syncope.common.services.EntitlementService;
-import org.apache.syncope.common.services.LoggerService;
-import org.apache.syncope.common.services.NotificationService;
-import org.apache.syncope.common.services.PolicyService;
-import org.apache.syncope.common.services.ReportService;
-import org.apache.syncope.common.services.ResourceService;
 import org.apache.syncope.common.services.RoleService;
-import org.apache.syncope.common.services.SchemaService;
 import org.apache.syncope.common.services.TaskService;
-import org.apache.syncope.common.services.UserRequestService;
 import org.apache.syncope.common.services.UserService;
-import org.apache.syncope.common.services.UserWorkflowService;
-import org.apache.syncope.common.services.WorkflowService;
 import org.apache.syncope.common.to.AttributeTO;
 import org.apache.syncope.common.to.RoleTO;
 import org.apache.syncope.common.to.TaskExecTO;
 import org.apache.syncope.common.to.AbstractTaskTO;
 import org.apache.syncope.common.to.UserTO;
-import org.apache.syncope.common.types.LoggerType;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class App {
+
+    private static final String ADDRESS;
+
+    static {
+        final InputStream configuration = App.class.getResourceAsStream("/configuration.properties");
+        final Properties prop = new Properties();
+        try {
+            prop.load(configuration);
+            ADDRESS = prop.getProperty("address");
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not read address from configuration.properties", e);
+        } finally {
+            if (configuration != null) {
+                try {
+                    configuration.close();
+                } catch (IOException ignore) {
+                    //ignore
+                }
+            }
+        }
+    }
 
     private static final String ADMIN_ID = "admin";
 
     private static final String ADMIN_PWD = "password";
 
-    private static final ClassPathXmlApplicationContext CTX =
-            new ClassPathXmlApplicationContext("applicationContext.xml");
-
-    private static final RestClientFactoryBean restClientFactory = CTX.getBean(RestClientFactoryBean.class);
-
-    private static UserService userService;
-
-    private static RoleService roleService;
-
-    private static ResourceService resourceService;
-
-    private static EntitlementService entitlementService;
-
-    private static ConfigurationService configurationService;
-
-    private static ConnectorService connectorService;
-
-    private static LoggerService loggerService;
-
-    private static ReportService reportService;
-
-    private static TaskService taskService;
-
-    private static WorkflowService workflowService;
-
-    private static NotificationService notificationService;
-
-    private static SchemaService schemaService;
-
-    private static UserRequestService userRequestService;
-
-    private static UserWorkflowService userWorkflowService;
-
-    private static PolicyService policyService;
+    private static final SyncopeClient client =
+            new SyncopeClientFactoryBean().setAddress(ADDRESS).create(ADMIN_ID, ADMIN_PWD);
 
     private static AttributeTO attributeTO(final String schema, final String value) {
-        AttributeTO attr = new AttributeTO();
+        final AttributeTO attr = new AttributeTO();
         attr.setSchema(schema);
         attr.getValues().add(value);
         return attr;
     }
 
     private static AttributeMod attributeMod(final String schema, final String valueToBeAdded) {
-        AttributeMod attr = new AttributeMod();
+        final AttributeMod attr = new AttributeMod();
         attr.setSchema(schema);
         attr.getValuesToBeAdded().add(valueToBeAdded);
         return attr;
@@ -94,14 +69,14 @@ public class App {
     }
 
     private static RoleTO buildBasicRoleTO(final String name) {
-        RoleTO roleTO = new RoleTO();
+        final RoleTO roleTO = new RoleTO();
         roleTO.setName(name + getUUIDString());
         roleTO.setParent(8L);
         return roleTO;
     }
 
     private static RoleTO buildRoleTO(final String name) {
-        RoleTO roleTO = buildBasicRoleTO(name);
+        final RoleTO roleTO = buildBasicRoleTO(name);
 
         // verify inheritance password and account policies
         roleTO.setInheritAccountPolicy(false);
@@ -141,42 +116,13 @@ public class App {
         return getSampleTO(getUUIDString() + email);
     }
 
-    private static <T> T getObject(final Response response, final Class<T> type, final Object serviceProxy) {
-        String location = response.getLocation().toString();
-        WebClient webClient = WebClient.fromClient(WebClient.client(serviceProxy));
-        webClient.to(location, false);
-
-        return webClient.get(type);
-    }
-
-    private static void init() {
-        userService = restClientFactory.createServiceInstance(UserService.class, ADMIN_ID, ADMIN_PWD);
-        userWorkflowService = restClientFactory.createServiceInstance(UserWorkflowService.class, ADMIN_ID, ADMIN_PWD);
-        roleService = restClientFactory.createServiceInstance(RoleService.class, ADMIN_ID, ADMIN_PWD);
-        resourceService = restClientFactory.createServiceInstance(ResourceService.class, ADMIN_ID, ADMIN_PWD);
-        entitlementService = restClientFactory.createServiceInstance(EntitlementService.class, ADMIN_ID, ADMIN_PWD);
-        configurationService = restClientFactory.createServiceInstance(ConfigurationService.class, ADMIN_ID, ADMIN_PWD);
-        connectorService = restClientFactory.createServiceInstance(ConnectorService.class, ADMIN_ID, ADMIN_PWD);
-        loggerService = restClientFactory.createServiceInstance(LoggerService.class, ADMIN_ID, ADMIN_PWD);
-        reportService = restClientFactory.createServiceInstance(ReportService.class, ADMIN_ID, ADMIN_PWD);
-        taskService = restClientFactory.createServiceInstance(TaskService.class, ADMIN_ID, ADMIN_PWD);
-        policyService = restClientFactory.createServiceInstance(PolicyService.class, ADMIN_ID, ADMIN_PWD);
-        workflowService = restClientFactory.createServiceInstance(WorkflowService.class, ADMIN_ID, ADMIN_PWD);
-        notificationService = restClientFactory.createServiceInstance(NotificationService.class, ADMIN_ID, ADMIN_PWD);
-        schemaService = restClientFactory.createServiceInstance(SchemaService.class, ADMIN_ID, ADMIN_PWD);
-        userRequestService = restClientFactory.createServiceInstance(UserRequestService.class, ADMIN_ID, ADMIN_PWD);
-    }
-
     private static TaskExecTO execSyncTask(final Long taskId, final int maxWaitSeconds,
             final boolean dryRun) {
 
-        AbstractTaskTO taskTO = taskService.read(taskId);
-        assertNotNull(taskTO);
-        assertNotNull(taskTO.getExecutions());
+        AbstractTaskTO taskTO = client.getService(TaskService.class).read(taskId);
 
         final int preSyncSize = taskTO.getExecutions().size();
-        final TaskExecTO execution = taskService.execute(taskTO.getId(), dryRun);
-        assertEquals("JOB_FIRED", execution.getStatus());
+        final TaskExecTO execution = client.getService(TaskService.class).execute(taskTO.getId(), dryRun);
 
         int i = 0;
         int maxit = maxWaitSeconds;
@@ -188,10 +134,7 @@ public class App {
             } catch (InterruptedException e) {
             }
 
-            taskTO = taskService.read(taskTO.getId());
-
-            assertNotNull(taskTO);
-            assertNotNull(taskTO.getExecutions());
+            taskTO = client.getService(TaskService.class).read(taskTO.getId());
 
             i++;
         } while (preSyncSize == taskTO.getExecutions().size() && i < maxit);
@@ -202,7 +145,7 @@ public class App {
     }
 
     private static UserTO createUser(final UserTO userTO) {
-        final Response response = userService.create(userTO);
+        final Response response = client.getService(UserService.class).create(userTO);
         if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
             throw new RuntimeException("Bad response: " + response);
         }
@@ -210,19 +153,14 @@ public class App {
     }
 
     private static RoleTO createRole(final RoleTO roleTO) {
-        final Response response = roleService.create(roleTO);
+        final Response response = client.getService(RoleService.class).create(roleTO);
         if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
             throw new RuntimeException("Bad response: " + response);
         }
         return response.readEntity(RoleTO.class);
     }
 
-    public static void main(final String[] args)
-            throws Exception {
-
-        init();
+    public static void main(final String[] args) {
         // *do* something
-        System.out.println("FFFFFF\n" + loggerService.list(LoggerType.LOG));
-
     }
 }
