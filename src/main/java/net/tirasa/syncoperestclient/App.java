@@ -12,13 +12,17 @@ import org.apache.syncope.client.SyncopeClient;
 import org.apache.syncope.client.SyncopeClientFactoryBean;
 import org.apache.syncope.common.mod.AttributeMod;
 import org.apache.syncope.common.services.RoleService;
+import org.apache.syncope.common.services.SchemaService;
 import org.apache.syncope.common.services.TaskService;
 import org.apache.syncope.common.services.UserService;
+import org.apache.syncope.common.to.AbstractSchemaTO;
 import org.apache.syncope.common.to.AttributeTO;
 import org.apache.syncope.common.to.RoleTO;
 import org.apache.syncope.common.to.TaskExecTO;
 import org.apache.syncope.common.to.AbstractTaskTO;
 import org.apache.syncope.common.to.UserTO;
+import org.apache.syncope.common.types.AttributableType;
+import org.apache.syncope.common.types.SchemaType;
 
 public class App {
 
@@ -87,7 +91,8 @@ public class App {
         // inherited so setter execution should be ignored
         roleTO.setPasswordPolicy(2L);
 
-        roleTO.getAttributes().add(attributeTO("icon", "anIcon"));
+        roleTO.getRAttrTemplates().add("icon");
+        roleTO.getAttrs().add(attributeTO("icon", "anIcon"));
 
         roleTO.getResources().add("resource-ldap");
         return roleTO;
@@ -99,16 +104,16 @@ public class App {
         userTO.setPassword("password123");
         userTO.setUsername(uid);
 
-        userTO.getAttributes().add(attributeTO("fullname", uid));
-        userTO.getAttributes().add(attributeTO("firstname", uid));
-        userTO.getAttributes().add(attributeTO("surname", "surname"));
-        userTO.getAttributes().add(attributeTO("type", "a type"));
-        userTO.getAttributes().add(attributeTO("userId", uid));
-        userTO.getAttributes().add(attributeTO("email", uid));
+        userTO.getAttrs().add(attributeTO("fullname", uid));
+        userTO.getAttrs().add(attributeTO("firstname", uid));
+        userTO.getAttrs().add(attributeTO("surname", "surname"));
+        userTO.getAttrs().add(attributeTO("type", "a type"));
+        userTO.getAttrs().add(attributeTO("userId", uid));
+        userTO.getAttrs().add(attributeTO("email", uid));
         final DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        userTO.getAttributes().add(attributeTO("loginDate", sdf.format(new Date())));
-        userTO.getDerivedAttributes().add(attributeTO("cn", null));
-        userTO.getVirtualAttributes().add(attributeTO("virtualdata", "virtualvalue"));
+        userTO.getAttrs().add(attributeTO("loginDate", sdf.format(new Date())));
+        userTO.getDerAttrs().add(attributeTO("cn", null));
+        userTO.getVirAttrs().add(attributeTO("virtualdata", "virtualvalue"));
         return userTO;
     }
 
@@ -144,6 +149,18 @@ public class App {
         return taskTO.getExecutions().get(0);
     }
 
+    @SuppressWarnings("unchecked")
+    private static <T extends AbstractSchemaTO> T createSchema(final AttributableType kind,
+            final SchemaType type, final T schemaTO) {
+
+        Response response = client.getService(SchemaService.class).create(kind, type, schemaTO);
+        if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
+            throw new RuntimeException("Bad response: " + response);
+        }
+
+        return (T) client.getObject(response.getLocation(), SchemaService.class, schemaTO.getClass());
+    }
+
     private static UserTO createUser(final UserTO userTO) {
         final Response response = client.getService(UserService.class).create(userTO);
         if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
@@ -157,7 +174,8 @@ public class App {
         if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
             throw new RuntimeException("Bad response: " + response);
         }
-        return response.readEntity(RoleTO.class);
+
+        return client.getObject(response.getLocation(), RoleService.class, RoleTO.class);
     }
 
     public static void main(final String[] args) {
