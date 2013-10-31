@@ -51,8 +51,8 @@ public class App {
 
     private static final String ADMIN_PWD = "password";
 
-    private static final SyncopeClient client =
-            new SyncopeClientFactoryBean().setAddress(ADDRESS).create(ADMIN_ID, ADMIN_PWD);
+    private static final SyncopeClient client = new SyncopeClientFactoryBean().setAddress(ADDRESS).
+            create(ADMIN_ID, ADMIN_PWD);
 
     private static AttributeTO attributeTO(final String schema, final String value) {
         final AttributeTO attr = new AttributeTO();
