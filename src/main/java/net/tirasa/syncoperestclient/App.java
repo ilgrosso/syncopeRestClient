@@ -11,10 +11,21 @@ import javax.ws.rs.core.Response;
 import org.apache.syncope.client.SyncopeClient;
 import org.apache.syncope.client.SyncopeClientFactoryBean;
 import org.apache.syncope.common.mod.AttributeMod;
+import org.apache.syncope.common.services.ConfigurationService;
+import org.apache.syncope.common.services.ConnectorService;
+import org.apache.syncope.common.services.EntitlementService;
+import org.apache.syncope.common.services.LoggerService;
+import org.apache.syncope.common.services.NotificationService;
+import org.apache.syncope.common.services.PolicyService;
+import org.apache.syncope.common.services.ReportService;
+import org.apache.syncope.common.services.ResourceService;
 import org.apache.syncope.common.services.RoleService;
 import org.apache.syncope.common.services.SchemaService;
 import org.apache.syncope.common.services.TaskService;
+import org.apache.syncope.common.services.UserSelfService;
 import org.apache.syncope.common.services.UserService;
+import org.apache.syncope.common.services.UserWorkflowService;
+import org.apache.syncope.common.services.WorkflowService;
 import org.apache.syncope.common.to.AbstractSchemaTO;
 import org.apache.syncope.common.to.AttributeTO;
 import org.apache.syncope.common.to.RoleTO;
@@ -51,8 +62,39 @@ public class App {
 
     private static final String ADMIN_PWD = "password";
 
-    private static final SyncopeClient client = new SyncopeClientFactoryBean().setAddress(ADDRESS).
-            create(ADMIN_ID, ADMIN_PWD);
+    private static final SyncopeClientFactoryBean clientFactory = new SyncopeClientFactoryBean().setAddress(ADDRESS);
+
+    private static final SyncopeClient client = clientFactory.create(ADMIN_ID, ADMIN_PWD);
+
+    private static UserService userService;
+
+    private static RoleService roleService;
+
+    private static ResourceService resourceService;
+
+    private static EntitlementService entitlementService;
+
+    private static ConfigurationService configurationService;
+
+    private static ConnectorService connectorService;
+
+    private static LoggerService loggerService;
+
+    private static ReportService reportService;
+
+    private static TaskService taskService;
+
+    private static WorkflowService workflowService;
+
+    private static NotificationService notificationService;
+
+    private static SchemaService schemaService;
+
+    private static UserSelfService userSelfService;
+
+    private static UserWorkflowService userWorkflowService;
+
+    private static PolicyService policyService;
 
     private static AttributeTO attributeTO(final String schema, final String value) {
         final AttributeTO attr = new AttributeTO();
@@ -178,7 +220,27 @@ public class App {
         return client.getObject(response.getLocation(), RoleService.class, RoleTO.class);
     }
 
+    private static void init() {
+        userService = client.getService(UserService.class);
+        userWorkflowService = client.getService(UserWorkflowService.class);
+        roleService = client.getService(RoleService.class);
+        resourceService = client.getService(ResourceService.class);
+        entitlementService = client.getService(EntitlementService.class);
+        configurationService = client.getService(ConfigurationService.class);
+        connectorService = client.getService(ConnectorService.class);
+        loggerService = client.getService(LoggerService.class);
+        reportService = client.getService(ReportService.class);
+        taskService = client.getService(TaskService.class);
+        policyService = client.getService(PolicyService.class);
+        workflowService = client.getService(WorkflowService.class);
+        notificationService = client.getService(NotificationService.class);
+        schemaService = client.getService(SchemaService.class);
+        userSelfService = client.getService(UserSelfService.class);
+    }
+
     public static void main(final String[] args) {
+        init();
+
         // *do* something
     }
 }
