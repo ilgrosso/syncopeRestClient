@@ -11,6 +11,7 @@ import javax.ws.rs.core.Response;
 import org.apache.syncope.client.SyncopeClient;
 import org.apache.syncope.client.SyncopeClientFactoryBean;
 import org.apache.syncope.common.mod.AttributeMod;
+import org.apache.syncope.common.mod.UserMod;
 import org.apache.syncope.common.services.ConfigurationService;
 import org.apache.syncope.common.services.ConnectorService;
 import org.apache.syncope.common.services.EntitlementService;
@@ -33,6 +34,7 @@ import org.apache.syncope.common.to.TaskExecTO;
 import org.apache.syncope.common.to.AbstractTaskTO;
 import org.apache.syncope.common.to.UserTO;
 import org.apache.syncope.common.types.AttributableType;
+import org.apache.syncope.common.types.RESTHeaders;
 import org.apache.syncope.common.types.SchemaType;
 
 public class App {
@@ -209,6 +211,19 @@ public class App {
             throw new RuntimeException("Bad response: " + response);
         }
         return response.readEntity(UserTO.class);
+    }
+
+    private static UserTO readUser(final String username) {
+        return userService.read(Long.valueOf(
+                userService.getUserId(username).getHeaderString(RESTHeaders.USER_ID.toString())));
+    }
+
+    private static UserTO updateUser(final UserMod userMod) {
+        return userService.update(userMod.getId(), userMod).readEntity(UserTO.class);
+    }
+
+    private static UserTO deleteUser(final Long id) {
+        return userService.delete(id).readEntity(UserTO.class);
     }
 
     private static RoleTO createRole(final RoleTO roleTO) {
