@@ -215,7 +215,7 @@ public class App {
 
     private static UserTO readUser(final String username) {
         return userService.read(Long.valueOf(
-                userService.getUserId(username).getHeaderString(RESTHeaders.USER_ID.toString())));
+                userService.getUserId(username).getHeaderString(RESTHeaders.USER_ID)));
     }
 
     private static UserTO updateUser(final UserMod userMod) {
