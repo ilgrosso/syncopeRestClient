@@ -2,12 +2,14 @@ package net.tirasa.syncoperestclient;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
+import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.syncope.client.SyncopeClient;
 import org.apache.syncope.client.SyncopeClientFactoryBean;
 import org.apache.syncope.common.mod.AttributeMod;
@@ -193,6 +195,13 @@ public class App {
         return taskTO.getExecutions().get(0);
     }
 
+    private static <T> T getObject(final URI location, final Class<?> serviceClass, final Class<T> resultClass) {
+        WebClient webClient = WebClient.fromClient(WebClient.client(client.getService(serviceClass)));
+        webClient.accept(clientFactory.getContentType().getMediaType()).to(location.toASCIIString(), false);
+
+        return webClient.get(resultClass);
+    }
+
     @SuppressWarnings("unchecked")
     private static <T extends AbstractSchemaTO> T createSchema(final AttributableType kind,
             final SchemaType type, final T schemaTO) {
@@ -202,7 +211,7 @@ public class App {
             throw new RuntimeException("Bad response: " + response);
         }
 
-        return (T) client.getObject(response.getLocation(), SchemaService.class, schemaTO.getClass());
+        return (T) getObject(response.getLocation(), SchemaService.class, schemaTO.getClass());
     }
 
     private static UserTO createUser(final UserTO userTO) {
@@ -232,7 +241,7 @@ public class App {
             throw new RuntimeException("Bad response: " + response);
         }
 
-        return client.getObject(response.getLocation(), RoleService.class, RoleTO.class);
+        return getObject(response.getLocation(), RoleService.class, RoleTO.class);
     }
 
     private static void init() {
