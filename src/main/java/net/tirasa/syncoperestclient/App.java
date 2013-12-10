@@ -70,6 +70,38 @@ public class App {
 
     private static final SyncopeClient client = clientFactory.create(ADMIN_ID, ADMIN_PWD);
 
+    private static final String RESOURCE_NAME_WS1 = "ws-target-resource-1";
+
+    private static final String RESOURCE_NAME_WS2 = "ws-target-resource-2";
+
+    private static final String RESOURCE_NAME_LDAP = "resource-ldap";
+
+    private static final String RESOURCE_NAME_TESTDB = "resource-testdb";
+
+    private static final String RESOURCE_NAME_TESTDB2 = "resource-testdb2";
+
+    private static final String RESOURCE_NAME_CSV = "resource-csv";
+
+    private static final String RESOURCE_NAME_DBSYNC = "resource-db-sync";
+
+    private static final String RESOURCE_NAME_DBVIRATTR = "resource-db-virattr";
+
+    private static final String RESOURCE_NAME_NOPROPAGATION = "ws-target-resource-nopropagation";
+
+    private static final String RESOURCE_NAME_NOPROPAGATION2 = "ws-target-resource-nopropagation2";
+
+    private static final String RESOURCE_NAME_NOPROPAGATION3 = "ws-target-resource-nopropagation3";
+
+    private static final String RESOURCE_NAME_NOPROPAGATION4 = "ws-target-resource-nopropagation4";
+
+    private static final String RESOURCE_NAME_RESETSYNCTOKEN = "ws-target-resource-update-resetsynctoken";
+
+    private static final String RESOURCE_NAME_TIMEOUT = "ws-target-resource-timeout";
+
+    private static final String RESOURCE_NAME_MAPPINGS1 = "ws-target-resource-list-mappings-1";
+
+    private static final String RESOURCE_NAME_MAPPINGS2 = "ws-target-resource-list-mappings-2";
+
     private static UserService userService;
 
     private static RoleService roleService;
