@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import org.apache.cxf.jaxrs.client.Client;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.http.HttpStatus;
@@ -76,11 +77,15 @@ public class App {
 
     private static final String BASE_URL = (String) CTX.getBean("baseURL");
 
+    private static final MediaType CXF_MEDIATYPE = MediaType.APPLICATION_JSON_TYPE;
+
     private static final MappingJacksonHttpMessageConverter mappingJacksonHttpMessageConverter =
             CTX.getBean(MappingJacksonHttpMessageConverter.class);
 
     private static final PreemptiveAuthHttpRequestFactory httpClientFactory =
             CTX.getBean(PreemptiveAuthHttpRequestFactory.class);
+
+    private static boolean enabledCXF = false;
 
     private static UserService userService;
 
@@ -179,16 +184,16 @@ public class App {
     }
 
     private static void setupRestTemplate(final String uid, final String pwd) {
-        PreemptiveAuthHttpRequestFactory requestFactory = ((PreemptiveAuthHttpRequestFactory) restTemplate
-                .getRequestFactory());
+        final PreemptiveAuthHttpRequestFactory requestFactory =
+                ((PreemptiveAuthHttpRequestFactory) restTemplate.getRequestFactory());
 
         ((DefaultHttpClient) requestFactory.getHttpClient()).getCredentialsProvider().setCredentials(
                 requestFactory.getAuthScope(), new UsernamePasswordCredentials(uid, pwd));
     }
 
     private static RestTemplate getAnonymousRestTemplate() {
-        RestTemplate template = new RestTemplate(httpClientFactory);
-        List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
+        final RestTemplate template = new RestTemplate(httpClientFactory);
+        final List<HttpMessageConverter<?>> converters = new ArrayList<HttpMessageConverter<?>>();
         converters.add(mappingJacksonHttpMessageConverter);
         template.setMessageConverters(converters);
         template.setErrorHandler(new SyncopeClientErrorHandler());
@@ -196,10 +201,11 @@ public class App {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> T setupCredentials(final T proxy, final Class<?> serviceInterface, final String username,
-            final String password) {
+    private static <T> T setupCredentials(final T proxy, final Class<?> serviceInterface,
+            final String username, final String password) {
+
         if (proxy instanceof SpringServiceProxy) {
-            SpringServiceProxy service = (SpringServiceProxy) proxy;
+            final SpringServiceProxy service = (SpringServiceProxy) proxy;
             if (username == null && password == null) {
                 service.setRestTemplate(getAnonymousRestTemplate());
             } else {
@@ -210,14 +216,16 @@ public class App {
             restClientFactory.setUsername(username);
             restClientFactory.setPassword(password);
             restClientFactory.setServiceClass(serviceInterface);
-            T serviceProxy = (T) restClientFactory.create(serviceInterface);
-            WebClient.client(serviceProxy).accept(MediaType.APPLICATION_XML).type(MediaType.APPLICATION_XML);
+            final T serviceProxy = (T) restClientFactory.create(serviceInterface);
+            WebClient.client(serviceProxy).accept(CXF_MEDIATYPE).type(CXF_MEDIATYPE);
             return serviceProxy;
         }
     }
 
     private static final void initSpring() {
-        PreemptiveAuthHttpRequestFactory requestFactory =
+        enabledCXF = false;
+
+        final PreemptiveAuthHttpRequestFactory requestFactory =
                 ((PreemptiveAuthHttpRequestFactory) restTemplate.getRequestFactory());
         ((DefaultHttpClient) requestFactory.getHttpClient()).getCredentialsProvider().setCredentials(
                 requestFactory.getAuthScope(), new UsernamePasswordCredentials(ADMIN_ID, ADMIN_PWD));
@@ -239,16 +247,20 @@ public class App {
         userWorkflowService = new UserWorkflowServiceProxy(BASE_URL, restTemplate);
     }
 
-    private static <T> T createServiceInstance(final Class<T> serviceClass, final String username, final String password) {
+    private static <T> T createServiceInstance(final Class<T> serviceClass,
+            final String username, final String password) {
+
         restClientFactory.setUsername(username);
         restClientFactory.setPassword(password);
         restClientFactory.setServiceClass(serviceClass);
-        T serviceProxy = restClientFactory.create(serviceClass);
-        WebClient.client(serviceProxy).type("application/json").accept("application/json");
+        final T serviceProxy = restClientFactory.create(serviceClass);
+        WebClient.client(serviceProxy).type(CXF_MEDIATYPE).accept(CXF_MEDIATYPE);
         return serviceProxy;
     }
 
     private static void initCXF() {
+        enabledCXF = true;
+
         userService = createServiceInstance(UserService.class, ADMIN_ID, ADMIN_PWD);
         userWorkflowService = createServiceInstance(UserWorkflowService.class, ADMIN_ID, ADMIN_PWD);
         roleService = createServiceInstance(RoleService.class, ADMIN_ID, ADMIN_PWD);
@@ -314,6 +326,30 @@ public class App {
             throw new RuntimeException("Bad response: " + response);
         }
         return response.readEntity(RoleTO.class);
+    }
+
+    private static <T> T getObjectCXF(final Response response, final Class<T> type, final Object serviceProxy) {
+        final String location = response.getLocation().toString();
+        final Client client = WebClient.client(serviceProxy);
+        final WebClient webClient = WebClient.fromClient(client);
+        webClient.accept(client.getHeaders().getFirst("Accept")).to(location, false);
+        webClient.to(location, false);
+
+        return webClient.get(type);
+    }
+
+    private static <T> T getObjectSpring(final Response response, final Class<T> type) {
+        return restTemplate.getForObject(response.getLocation(), type);
+    }
+
+    private static <T> T getObject(final Response response, final Class<T> type, final Object serviceProxy) {
+        assertNotNull(response);
+        assertNotNull(response.getLocation());
+        if (enabledCXF) {
+            return getObjectCXF(response, type, serviceProxy);
+        } else {
+            return getObjectSpring(response, type);
+        }
     }
 
     public static void main(final String[] args)
