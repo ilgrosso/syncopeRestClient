@@ -4,7 +4,7 @@
   <groupId>net.tirasa.syncope</groupId>
   <artifactId>syncope-rest-client</artifactId>
   <packaging>jar</packaging>
-  <version>1.2-SNAPSHOT</version>
+  <version>1.3-SNAPSHOT</version>
   <name>syncope-rest-client</name>
 
   <properties>
