@@ -247,7 +247,7 @@ public class App {
     }
 
     private static UserTO createUser(final UserTO userTO) {
-        final Response response = client.getService(UserService.class).create(userTO);
+        final Response response = client.getService(UserService.class).create(userTO, true);
         if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
             throw new RuntimeException("Bad response: " + response);
         }
