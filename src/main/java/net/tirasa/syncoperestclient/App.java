@@ -24,6 +24,7 @@ import org.apache.syncope.common.services.ReportService;
 import org.apache.syncope.common.services.ResourceService;
 import org.apache.syncope.common.services.RoleService;
 import org.apache.syncope.common.services.SchemaService;
+import org.apache.syncope.common.services.SecurityQuestionService;
 import org.apache.syncope.common.services.TaskService;
 import org.apache.syncope.common.services.UserSelfService;
 import org.apache.syncope.common.services.UserService;
@@ -131,6 +132,8 @@ public class App {
     private static UserWorkflowService userWorkflowService;
 
     private static PolicyService policyService;
+
+    private static SecurityQuestionService securityQuestionService;
 
     private static AttributeTO attributeTO(final String schema, final String value) {
         final AttributeTO attr = new AttributeTO();
@@ -292,6 +295,7 @@ public class App {
         notificationService = client.getService(NotificationService.class);
         schemaService = client.getService(SchemaService.class);
         userSelfService = client.getService(UserSelfService.class);
+        securityQuestionService = client.getService(SecurityQuestionService.class);
     }
 
     public static void main(final String[] args) {
