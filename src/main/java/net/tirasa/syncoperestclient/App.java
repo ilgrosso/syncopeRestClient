@@ -10,35 +10,36 @@ import java.util.Properties;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
 import org.apache.cxf.jaxrs.client.WebClient;
-import org.apache.syncope.client.SyncopeClient;
-import org.apache.syncope.client.SyncopeClientFactoryBean;
-import org.apache.syncope.common.mod.AttributeMod;
-import org.apache.syncope.common.mod.UserMod;
-import org.apache.syncope.common.services.ConfigurationService;
-import org.apache.syncope.common.services.ConnectorService;
-import org.apache.syncope.common.services.EntitlementService;
-import org.apache.syncope.common.services.LoggerService;
-import org.apache.syncope.common.services.NotificationService;
-import org.apache.syncope.common.services.PolicyService;
-import org.apache.syncope.common.services.ReportService;
-import org.apache.syncope.common.services.ResourceService;
-import org.apache.syncope.common.services.RoleService;
-import org.apache.syncope.common.services.SchemaService;
-import org.apache.syncope.common.services.SecurityQuestionService;
-import org.apache.syncope.common.services.TaskService;
-import org.apache.syncope.common.services.UserSelfService;
-import org.apache.syncope.common.services.UserService;
-import org.apache.syncope.common.services.UserWorkflowService;
-import org.apache.syncope.common.services.WorkflowService;
-import org.apache.syncope.common.to.AbstractSchemaTO;
-import org.apache.syncope.common.to.AttributeTO;
-import org.apache.syncope.common.to.RoleTO;
-import org.apache.syncope.common.to.TaskExecTO;
-import org.apache.syncope.common.to.AbstractTaskTO;
-import org.apache.syncope.common.to.UserTO;
-import org.apache.syncope.common.types.AttributableType;
-import org.apache.syncope.common.types.RESTHeaders;
-import org.apache.syncope.common.types.SchemaType;
+import org.apache.syncope.client.lib.SyncopeClient;
+import org.apache.syncope.client.lib.SyncopeClientFactoryBean;
+import org.apache.syncope.common.lib.mod.AttrMod;
+import org.apache.syncope.common.lib.mod.UserMod;
+import org.apache.syncope.common.lib.to.AbstractSchemaTO;
+import org.apache.syncope.common.lib.to.AbstractTaskTO;
+import org.apache.syncope.common.lib.to.AttrTO;
+import org.apache.syncope.common.lib.to.RoleTO;
+import org.apache.syncope.common.lib.to.TaskExecTO;
+import org.apache.syncope.common.lib.to.UserTO;
+import org.apache.syncope.common.lib.types.AttributableType;
+import org.apache.syncope.common.lib.types.SchemaType;
+import org.apache.syncope.common.rest.api.RESTHeaders;
+import org.apache.syncope.common.rest.api.service.ConfigurationService;
+import org.apache.syncope.common.rest.api.service.ConnectorService;
+import org.apache.syncope.common.rest.api.service.EntitlementService;
+import org.apache.syncope.common.rest.api.service.LoggerService;
+import org.apache.syncope.common.rest.api.service.NotificationService;
+import org.apache.syncope.common.rest.api.service.PolicyService;
+import org.apache.syncope.common.rest.api.service.ReportService;
+import org.apache.syncope.common.rest.api.service.ResourceService;
+import org.apache.syncope.common.rest.api.service.RoleService;
+import org.apache.syncope.common.rest.api.service.SchemaService;
+import org.apache.syncope.common.rest.api.service.SecurityQuestionService;
+import org.apache.syncope.common.rest.api.service.SyncopeService;
+import org.apache.syncope.common.rest.api.service.TaskService;
+import org.apache.syncope.common.rest.api.service.UserSelfService;
+import org.apache.syncope.common.rest.api.service.UserService;
+import org.apache.syncope.common.rest.api.service.UserWorkflowService;
+import org.apache.syncope.common.rest.api.service.WorkflowService;
 
 public class App {
 
@@ -103,6 +104,8 @@ public class App {
 
     private static final String RESOURCE_NAME_MAPPINGS2 = "ws-target-resource-list-mappings-2";
 
+    private static SyncopeService syncopeService;
+
     private static UserService userService;
 
     private static RoleService roleService;
@@ -135,15 +138,15 @@ public class App {
 
     private static SecurityQuestionService securityQuestionService;
 
-    private static AttributeTO attributeTO(final String schema, final String value) {
-        final AttributeTO attr = new AttributeTO();
+    private static AttrTO attrTO(final String schema, final String value) {
+        final AttrTO attr = new AttrTO();
         attr.setSchema(schema);
         attr.getValues().add(value);
         return attr;
     }
 
-    private static AttributeMod attributeMod(final String schema, final String valueToBeAdded) {
-        final AttributeMod attr = new AttributeMod();
+    private static AttrMod attrMod(final String schema, final String valueToBeAdded) {
+        final AttrMod attr = new AttrMod();
         attr.setSchema(schema);
         attr.getValuesToBeAdded().add(valueToBeAdded);
         return attr;
@@ -173,7 +176,7 @@ public class App {
         roleTO.setPasswordPolicy(2L);
 
         roleTO.getRAttrTemplates().add("icon");
-        roleTO.getAttrs().add(attributeTO("icon", "anIcon"));
+        roleTO.getPlainAttrs().add(attrTO("icon", "anIcon"));
 
         roleTO.getResources().add("resource-ldap");
         return roleTO;
@@ -185,16 +188,16 @@ public class App {
         userTO.setPassword("password123");
         userTO.setUsername(uid);
 
-        userTO.getAttrs().add(attributeTO("fullname", uid));
-        userTO.getAttrs().add(attributeTO("firstname", uid));
-        userTO.getAttrs().add(attributeTO("surname", "surname"));
-        userTO.getAttrs().add(attributeTO("type", "a type"));
-        userTO.getAttrs().add(attributeTO("userId", uid));
-        userTO.getAttrs().add(attributeTO("email", uid));
+        userTO.getPlainAttrs().add(attrTO("fullname", uid));
+        userTO.getPlainAttrs().add(attrTO("firstname", uid));
+        userTO.getPlainAttrs().add(attrTO("surname", "surname"));
+        userTO.getPlainAttrs().add(attrTO("type", "a type"));
+        userTO.getPlainAttrs().add(attrTO("userId", uid));
+        userTO.getPlainAttrs().add(attrTO("email", uid));
         final DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        userTO.getAttrs().add(attributeTO("loginDate", sdf.format(new Date())));
-        userTO.getDerAttrs().add(attributeTO("cn", null));
-        userTO.getVirAttrs().add(attributeTO("virtualdata", "virtualvalue"));
+        userTO.getPlainAttrs().add(attrTO("loginDate", sdf.format(new Date())));
+        userTO.getDerAttrs().add(attrTO("cn", null));
+        userTO.getVirAttrs().add(attrTO("virtualdata", "virtualvalue"));
         return userTO;
     }
 
@@ -208,7 +211,7 @@ public class App {
         AbstractTaskTO taskTO = client.getService(TaskService.class).read(taskId);
 
         final int preSyncSize = taskTO.getExecutions().size();
-        final TaskExecTO execution = client.getService(TaskService.class).execute(taskTO.getId(), dryRun);
+        final TaskExecTO execution = client.getService(TaskService.class).execute(taskTO.getKey(), dryRun);
 
         int i = 0;
         int maxit = maxWaitSeconds;
@@ -220,7 +223,7 @@ public class App {
             } catch (InterruptedException e) {
             }
 
-            taskTO = client.getService(TaskService.class).read(taskTO.getId());
+            taskTO = client.getService(TaskService.class).read(taskTO.getKey());
 
             i++;
         } while (preSyncSize == taskTO.getExecutions().size() && i < maxit);
@@ -263,7 +266,7 @@ public class App {
     }
 
     private static UserTO updateUser(final UserMod userMod) {
-        return userService.update(userMod.getId(), userMod).readEntity(UserTO.class);
+        return userService.update(userMod.getKey(), userMod).readEntity(UserTO.class);
     }
 
     private static UserTO deleteUser(final Long id) {
@@ -280,6 +283,7 @@ public class App {
     }
 
     private static void init() {
+        syncopeService = client.getService(SyncopeService.class);
         userService = client.getService(UserService.class);
         userWorkflowService = client.getService(UserWorkflowService.class);
         roleService = client.getService(RoleService.class);
