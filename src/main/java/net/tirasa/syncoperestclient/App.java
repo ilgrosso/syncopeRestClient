@@ -175,7 +175,7 @@ public class App {
         // inherited so setter execution should be ignored
         roleTO.setPasswordPolicy(2L);
 
-        roleTO.getRAttrTemplates().add("icon");
+        roleTO.getRPlainAttrTemplates().add("icon");
         roleTO.getPlainAttrs().add(attrTO("icon", "anIcon"));
 
         roleTO.getResources().add("resource-ldap");
