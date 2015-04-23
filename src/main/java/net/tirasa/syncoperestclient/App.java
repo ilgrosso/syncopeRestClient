@@ -12,12 +12,13 @@ import javax.ws.rs.core.Response;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.syncope.client.lib.SyncopeClient;
 import org.apache.syncope.client.lib.SyncopeClientFactoryBean;
+import org.apache.syncope.common.lib.SyncopeConstants;
 import org.apache.syncope.common.lib.mod.AttrMod;
 import org.apache.syncope.common.lib.mod.UserMod;
 import org.apache.syncope.common.lib.to.AbstractSchemaTO;
 import org.apache.syncope.common.lib.to.AbstractTaskTO;
 import org.apache.syncope.common.lib.to.AttrTO;
-import org.apache.syncope.common.lib.to.RoleTO;
+import org.apache.syncope.common.lib.to.GroupTO;
 import org.apache.syncope.common.lib.to.TaskExecTO;
 import org.apache.syncope.common.lib.to.UserTO;
 import org.apache.syncope.common.lib.types.AttributableType;
@@ -25,12 +26,13 @@ import org.apache.syncope.common.lib.types.SchemaType;
 import org.apache.syncope.common.rest.api.RESTHeaders;
 import org.apache.syncope.common.rest.api.service.ConfigurationService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
-import org.apache.syncope.common.rest.api.service.EntitlementService;
 import org.apache.syncope.common.rest.api.service.LoggerService;
 import org.apache.syncope.common.rest.api.service.NotificationService;
 import org.apache.syncope.common.rest.api.service.PolicyService;
 import org.apache.syncope.common.rest.api.service.ReportService;
 import org.apache.syncope.common.rest.api.service.ResourceService;
+import org.apache.syncope.common.rest.api.service.GroupService;
+import org.apache.syncope.common.rest.api.service.RealmService;
 import org.apache.syncope.common.rest.api.service.RoleService;
 import org.apache.syncope.common.rest.api.service.SchemaService;
 import org.apache.syncope.common.rest.api.service.SecurityQuestionService;
@@ -64,13 +66,17 @@ public class App {
         }
     }
 
-    private static final String ADMIN_ID = "admin";
+    private static final String ADMIN_UNAME = "admin";
 
     private static final String ADMIN_PWD = "password";
 
+    private static final String ANONYMOUS_UNAME = "anonymous";
+
+    private static final String ANONYMOUS_KEY = "anonymousKey";
+
     private static final SyncopeClientFactoryBean clientFactory = new SyncopeClientFactoryBean().setAddress(ADDRESS);
 
-    private static final SyncopeClient client = clientFactory.create(ADMIN_ID, ADMIN_PWD);
+    private static final SyncopeClient client = clientFactory.create(ADMIN_UNAME, ADMIN_PWD);
 
     private static final String RESOURCE_NAME_WS1 = "ws-target-resource-1";
 
@@ -106,13 +112,15 @@ public class App {
 
     private static SyncopeService syncopeService;
 
-    private static UserService userService;
+    private static RealmService realmService;
 
     private static RoleService roleService;
 
-    private static ResourceService resourceService;
+    private static UserService userService;
 
-    private static EntitlementService entitlementService;
+    private static GroupService groupService;
+
+    private static ResourceService resourceService;
 
     private static ConfigurationService configurationService;
 
@@ -156,35 +164,27 @@ public class App {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 
-    private static RoleTO buildBasicRoleTO(final String name) {
-        final RoleTO roleTO = new RoleTO();
-        roleTO.setName(name + getUUIDString());
-        roleTO.setParent(8L);
-        return roleTO;
+    private static GroupTO buildBasicGroupTO(final String name) {
+        final GroupTO groupTO = new GroupTO();
+        groupTO.setName(name + getUUIDString());
+        groupTO.setRealm(SyncopeConstants.ROOT_REALM);
+        return groupTO;
     }
 
-    private static RoleTO buildRoleTO(final String name) {
-        final RoleTO roleTO = buildBasicRoleTO(name);
+    private static GroupTO buildGroupTO(final String name) {
+        final GroupTO groupTO = buildBasicGroupTO(name);
 
-        // verify inheritance password and account policies
-        roleTO.setInheritAccountPolicy(false);
-        // not inherited so setter execution shouldn't be ignored
-        roleTO.setAccountPolicy(6L);
+        groupTO.getGPlainAttrTemplates().add("icon");
+        groupTO.getPlainAttrs().add(attrTO("icon", "anIcon"));
 
-        roleTO.setInheritPasswordPolicy(true);
-        // inherited so setter execution should be ignored
-        roleTO.setPasswordPolicy(2L);
-
-        roleTO.getRPlainAttrTemplates().add("icon");
-        roleTO.getPlainAttrs().add(attrTO("icon", "anIcon"));
-
-        roleTO.getResources().add("resource-ldap");
-        return roleTO;
+        groupTO.getResources().add("resource-ldap");
+        return groupTO;
     }
 
     public static UserTO getSampleTO(final String email) {
         final String uid = email;
         final UserTO userTO = new UserTO();
+        userTO.setRealm("/");
         userTO.setPassword("password123");
         userTO.setUsername(uid);
 
@@ -273,22 +273,23 @@ public class App {
         return userService.delete(id).readEntity(UserTO.class);
     }
 
-    private static RoleTO createRole(final RoleTO roleTO) {
-        final Response response = client.getService(RoleService.class).create(roleTO);
+    private static GroupTO createGroup(final GroupTO groupTO) {
+        final Response response = client.getService(GroupService.class).create(groupTO);
         if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
             throw new RuntimeException("Bad response: " + response);
         }
 
-        return getObject(response.getLocation(), RoleService.class, RoleTO.class);
+        return getObject(response.getLocation(), GroupService.class, GroupTO.class);
     }
 
     private static void init() {
         syncopeService = client.getService(SyncopeService.class);
+        realmService = client.getService(RealmService.class);
+        roleService = client.getService(RoleService.class);
         userService = client.getService(UserService.class);
         userWorkflowService = client.getService(UserWorkflowService.class);
-        roleService = client.getService(RoleService.class);
+        groupService = client.getService(GroupService.class);
         resourceService = client.getService(ResourceService.class);
-        entitlementService = client.getService(EntitlementService.class);
         configurationService = client.getService(ConfigurationService.class);
         connectorService = client.getService(ConnectorService.class);
         loggerService = client.getService(LoggerService.class);
