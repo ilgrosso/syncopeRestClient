@@ -164,15 +164,15 @@ public class App {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 
-    private static GroupTO buildBasicGroupTO(final String name) {
+    private static GroupTO getBasicSampleTO(final String name) {
         final GroupTO groupTO = new GroupTO();
         groupTO.setName(name + getUUIDString());
         groupTO.setRealm(SyncopeConstants.ROOT_REALM);
         return groupTO;
     }
 
-    private static GroupTO buildGroupTO(final String name) {
-        final GroupTO groupTO = buildBasicGroupTO(name);
+    private static GroupTO getSampleGroupTO(final String name) {
+        final GroupTO groupTO = getBasicSampleTO(name);
 
         groupTO.getGPlainAttrTemplates().add("icon");
         groupTO.getPlainAttrs().add(attrTO("icon", "anIcon"));
