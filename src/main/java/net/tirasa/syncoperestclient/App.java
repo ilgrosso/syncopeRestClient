@@ -1,5 +1,9 @@
 package net.tirasa.syncoperestclient;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -17,13 +21,16 @@ import org.apache.syncope.common.lib.mod.AttrMod;
 import org.apache.syncope.common.lib.mod.UserMod;
 import org.apache.syncope.common.lib.to.AbstractSchemaTO;
 import org.apache.syncope.common.lib.to.AbstractTaskTO;
+import org.apache.syncope.common.lib.to.AnyObjectTO;
 import org.apache.syncope.common.lib.to.AttrTO;
 import org.apache.syncope.common.lib.to.GroupTO;
 import org.apache.syncope.common.lib.to.TaskExecTO;
 import org.apache.syncope.common.lib.to.UserTO;
-import org.apache.syncope.common.lib.types.AttributableType;
 import org.apache.syncope.common.lib.types.SchemaType;
 import org.apache.syncope.common.rest.api.RESTHeaders;
+import org.apache.syncope.common.rest.api.service.AnyObjectService;
+import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
+import org.apache.syncope.common.rest.api.service.AnyTypeService;
 import org.apache.syncope.common.rest.api.service.ConfigurationService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
 import org.apache.syncope.common.rest.api.service.LoggerService;
@@ -33,6 +40,7 @@ import org.apache.syncope.common.rest.api.service.ReportService;
 import org.apache.syncope.common.rest.api.service.ResourceService;
 import org.apache.syncope.common.rest.api.service.GroupService;
 import org.apache.syncope.common.rest.api.service.RealmService;
+import org.apache.syncope.common.rest.api.service.RelationshipTypeService;
 import org.apache.syncope.common.rest.api.service.RoleService;
 import org.apache.syncope.common.rest.api.service.SchemaService;
 import org.apache.syncope.common.rest.api.service.SecurityQuestionService;
@@ -110,9 +118,19 @@ public class App {
 
     private static final String RESOURCE_NAME_MAPPINGS2 = "ws-target-resource-list-mappings-2";
 
+    private static final String RESOURCE_NAME_DBSCRIPTED = "resource-db-scripted";
+
     private static SyncopeService syncopeService;
 
+    private static AnyTypeClassService anyTypeClassService;
+
+    private static AnyTypeService anyTypeService;
+
+    private static RelationshipTypeService relationshipTypeService;
+
     private static RealmService realmService;
+
+    private static AnyObjectService anyObjectService;
 
     private static RoleService roleService;
 
@@ -174,7 +192,6 @@ public class App {
     private static GroupTO getSampleGroupTO(final String name) {
         final GroupTO groupTO = getBasicSampleTO(name);
 
-        groupTO.getGPlainAttrTemplates().add("icon");
         groupTO.getPlainAttrs().add(attrTO("icon", "anIcon"));
 
         groupTO.getResources().add("resource-ldap");
@@ -205,13 +222,14 @@ public class App {
         return getSampleTO(getUUIDString() + email);
     }
 
-    private static TaskExecTO execSyncTask(final Long taskId, final int maxWaitSeconds,
-            final boolean dryRun) {
+    private static TaskExecTO execProvisioningTask(final Long taskKey, final int maxWaitSeconds, final boolean dryRun) {
+        AbstractTaskTO taskTO = taskService.read(taskKey);
+        assertNotNull(taskTO);
+        assertNotNull(taskTO.getExecutions());
 
-        AbstractTaskTO taskTO = client.getService(TaskService.class).read(taskId);
-
-        final int preSyncSize = taskTO.getExecutions().size();
-        final TaskExecTO execution = client.getService(TaskService.class).execute(taskTO.getKey(), dryRun);
+        int preSyncSize = taskTO.getExecutions().size();
+        TaskExecTO execution = taskService.execute(taskTO.getKey(), dryRun);
+        assertEquals("JOB_FIRED", execution.getStatus());
 
         int i = 0;
         int maxit = maxWaitSeconds;
@@ -223,14 +241,17 @@ public class App {
             } catch (InterruptedException e) {
             }
 
-            taskTO = client.getService(TaskService.class).read(taskTO.getKey());
+            taskTO = taskService.read(taskTO.getKey());
+
+            assertNotNull(taskTO);
+            assertNotNull(taskTO.getExecutions());
 
             i++;
         } while (preSyncSize == taskTO.getExecutions().size() && i < maxit);
         if (i == maxit) {
-            throw new RuntimeException("Timeout when executing task " + taskId);
+            fail("Timeout when executing task " + taskKey);
         }
-        return taskTO.getExecutions().get(0);
+        return taskTO.getExecutions().get(taskTO.getExecutions().size() - 1);
     }
 
     private static <T> T getObject(final URI location, final Class<?> serviceClass, final Class<T> resultClass) {
@@ -241,10 +262,8 @@ public class App {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T extends AbstractSchemaTO> T createSchema(final AttributableType kind,
-            final SchemaType type, final T schemaTO) {
-
-        Response response = client.getService(SchemaService.class).create(kind, type, schemaTO);
+    private static <T extends AbstractSchemaTO> T createSchema(final SchemaType type, final T schemaTO) {
+        Response response = client.getService(SchemaService.class).create(type, schemaTO);
         if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
             throw new RuntimeException("Bad response: " + response);
         }
@@ -262,15 +281,26 @@ public class App {
 
     private static UserTO readUser(final String username) {
         return userService.read(Long.valueOf(
-                userService.getUserId(username).getHeaderString(RESTHeaders.USER_ID)));
+                userService.getUserKey(username).getHeaderString(RESTHeaders.USER_KEY)));
     }
 
     private static UserTO updateUser(final UserMod userMod) {
-        return userService.update(userMod.getKey(), userMod).readEntity(UserTO.class);
+        return userService.update(userMod).readEntity(UserTO.class);
     }
 
     private static UserTO deleteUser(final Long id) {
         return userService.delete(id).readEntity(UserTO.class);
+    }
+
+    private static AnyObjectTO createAnyObject(final AnyObjectTO anyObjectTO) {
+        Response response = anyObjectService.create(anyObjectTO);
+        if (response.getStatusInfo().getStatusCode() != Response.Status.CREATED.getStatusCode()) {
+            Exception ex = clientFactory.getExceptionMapper().fromResponse(response);
+            if (ex != null) {
+                throw (RuntimeException) ex;
+            }
+        }
+        return getObject(response.getLocation(), AnyObjectService.class, AnyObjectTO.class);
     }
 
     private static GroupTO createGroup(final GroupTO groupTO) {
@@ -284,7 +314,11 @@ public class App {
 
     private static void init() {
         syncopeService = client.getService(SyncopeService.class);
+        anyTypeClassService = client.getService(AnyTypeClassService.class);
+        anyTypeService = client.getService(AnyTypeService.class);
+        relationshipTypeService = client.getService(RelationshipTypeService.class);
         realmService = client.getService(RealmService.class);
+        anyObjectService = client.getService(AnyObjectService.class);
         roleService = client.getService(RoleService.class);
         userService = client.getService(UserService.class);
         userWorkflowService = client.getService(UserWorkflowService.class);
