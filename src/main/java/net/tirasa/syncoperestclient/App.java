@@ -33,6 +33,7 @@ import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
 import org.apache.syncope.common.rest.api.service.AnyTypeService;
 import org.apache.syncope.common.rest.api.service.ConfigurationService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
+import org.apache.syncope.common.rest.api.service.DomainService;
 import org.apache.syncope.common.rest.api.service.LoggerService;
 import org.apache.syncope.common.rest.api.service.NotificationService;
 import org.apache.syncope.common.rest.api.service.PolicyService;
@@ -121,6 +122,8 @@ public class App {
     private static final String RESOURCE_NAME_DBSCRIPTED = "resource-db-scripted";
 
     private static SyncopeService syncopeService;
+
+    private static DomainService domainService;
 
     private static AnyTypeClassService anyTypeClassService;
 
@@ -314,6 +317,7 @@ public class App {
 
     private static void init() {
         syncopeService = client.getService(SyncopeService.class);
+        domainService = client.getService(DomainService.class);
         anyTypeClassService = client.getService(AnyTypeClassService.class);
         anyTypeService = client.getService(AnyTypeService.class);
         relationshipTypeService = client.getService(RelationshipTypeService.class);
