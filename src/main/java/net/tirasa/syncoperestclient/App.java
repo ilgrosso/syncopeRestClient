@@ -17,8 +17,8 @@ import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.syncope.client.lib.SyncopeClient;
 import org.apache.syncope.client.lib.SyncopeClientFactoryBean;
 import org.apache.syncope.common.lib.SyncopeConstants;
-import org.apache.syncope.common.lib.mod.AttrMod;
-import org.apache.syncope.common.lib.mod.UserMod;
+import org.apache.syncope.common.lib.patch.AttrPatch;
+import org.apache.syncope.common.lib.patch.UserPatch;
 import org.apache.syncope.common.lib.to.AbstractSchemaTO;
 import org.apache.syncope.common.lib.to.AbstractTaskTO;
 import org.apache.syncope.common.lib.to.AnyObjectTO;
@@ -26,6 +26,7 @@ import org.apache.syncope.common.lib.to.AttrTO;
 import org.apache.syncope.common.lib.to.GroupTO;
 import org.apache.syncope.common.lib.to.TaskExecTO;
 import org.apache.syncope.common.lib.to.UserTO;
+import org.apache.syncope.common.lib.types.PatchOperation;
 import org.apache.syncope.common.lib.types.SchemaType;
 import org.apache.syncope.common.rest.api.RESTHeaders;
 import org.apache.syncope.common.rest.api.service.AnyObjectService;
@@ -168,24 +169,28 @@ public class App {
     private static SecurityQuestionService securityQuestionService;
 
     private static AttrTO attrTO(final String schema, final String value) {
-        final AttrTO attr = new AttrTO();
-        attr.setSchema(schema);
-        attr.getValues().add(value);
-        return attr;
+        return new AttrTO.Builder().schema(schema).value(value).build();
     }
 
-    private static AttrMod attrMod(final String schema, final String valueToBeAdded) {
-        final AttrMod attr = new AttrMod();
-        attr.setSchema(schema);
-        attr.getValuesToBeAdded().add(valueToBeAdded);
-        return attr;
+    private static AttrPatch attrAddReplacePatch(final String schema, final String value) {
+        return new AttrPatch.Builder().operation(PatchOperation.ADD_REPLACE).attrTO(attrTO(schema, value)).build();
     }
 
     private static String getUUIDString() {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 
-    private static GroupTO getBasicSampleTO(final String name) {
+    private static AnyObjectTO getSampleAnyObjectTO(final String location) {
+        AnyObjectTO anyObjectTO = new AnyObjectTO();
+        anyObjectTO.setRealm(SyncopeConstants.ROOT_REALM);
+        anyObjectTO.setType("PRINTER");
+        anyObjectTO.getPlainAttrs().add(attrTO("location", location + getUUIDString()));
+
+        anyObjectTO.getResources().add(RESOURCE_NAME_DBSCRIPTED);
+        return anyObjectTO;
+    }
+
+    private static GroupTO getBasicSampleGroupTO(final String name) {
         final GroupTO groupTO = new GroupTO();
         groupTO.setName(name + getUUIDString());
         groupTO.setRealm(SyncopeConstants.ROOT_REALM);
@@ -193,17 +198,17 @@ public class App {
     }
 
     private static GroupTO getSampleGroupTO(final String name) {
-        final GroupTO groupTO = getBasicSampleTO(name);
+        final GroupTO groupTO = getBasicSampleGroupTO(name);
 
         groupTO.getPlainAttrs().add(attrTO("icon", "anIcon"));
 
-        groupTO.getResources().add("resource-ldap");
+        groupTO.getResources().add(RESOURCE_NAME_LDAP);
         return groupTO;
     }
 
-    public static UserTO getSampleTO(final String email) {
-        final String uid = email;
-        final UserTO userTO = new UserTO();
+    public static UserTO getSampleUserTO(final String email) {
+        String uid = email;
+        UserTO userTO = new UserTO();
         userTO.setRealm("/");
         userTO.setPassword("password123");
         userTO.setUsername(uid);
@@ -214,15 +219,15 @@ public class App {
         userTO.getPlainAttrs().add(attrTO("type", "a type"));
         userTO.getPlainAttrs().add(attrTO("userId", uid));
         userTO.getPlainAttrs().add(attrTO("email", uid));
-        final DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         userTO.getPlainAttrs().add(attrTO("loginDate", sdf.format(new Date())));
         userTO.getDerAttrs().add(attrTO("cn", null));
         userTO.getVirAttrs().add(attrTO("virtualdata", "virtualvalue"));
         return userTO;
     }
 
-    private static UserTO getUniqueSampleTO(final String email) {
-        return getSampleTO(getUUIDString() + email);
+    private static UserTO getUniqueSampleUserTO(final String email) {
+        return getSampleUserTO(getUUIDString() + email);
     }
 
     private static TaskExecTO execProvisioningTask(final Long taskKey, final int maxWaitSeconds, final boolean dryRun) {
@@ -287,8 +292,8 @@ public class App {
                 userService.getUserKey(username).getHeaderString(RESTHeaders.USER_KEY)));
     }
 
-    private static UserTO updateUser(final UserMod userMod) {
-        return userService.update(userMod).readEntity(UserTO.class);
+    private static UserTO updateUser(final UserPatch userPatch) {
+        return userService.update(userPatch).readEntity(UserTO.class);
     }
 
     private static UserTO deleteUser(final Long id) {
