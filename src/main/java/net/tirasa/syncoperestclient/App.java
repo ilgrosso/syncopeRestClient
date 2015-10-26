@@ -308,7 +308,7 @@ public class App {
                 throw (RuntimeException) ex;
             }
         }
-        return getObject(response.getLocation(), AnyObjectService.class, AnyObjectTO.class);
+        return response.readEntity(AnyObjectTO.class);
     }
 
     private static GroupTO createGroup(final GroupTO groupTO) {
@@ -317,7 +317,7 @@ public class App {
             throw new RuntimeException("Bad response: " + response);
         }
 
-        return getObject(response.getLocation(), GroupService.class, GroupTO.class);
+        return response.readEntity(GroupTO.class);
     }
 
     private static void init() {
