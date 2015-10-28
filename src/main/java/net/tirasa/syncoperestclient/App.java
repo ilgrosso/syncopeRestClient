@@ -12,18 +12,22 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 import java.util.UUID;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.syncope.client.lib.SyncopeClient;
 import org.apache.syncope.client.lib.SyncopeClientFactoryBean;
 import org.apache.syncope.common.lib.SyncopeConstants;
+import org.apache.syncope.common.lib.patch.AnyObjectPatch;
 import org.apache.syncope.common.lib.patch.AttrPatch;
+import org.apache.syncope.common.lib.patch.GroupPatch;
 import org.apache.syncope.common.lib.patch.UserPatch;
 import org.apache.syncope.common.lib.to.AbstractSchemaTO;
 import org.apache.syncope.common.lib.to.AbstractTaskTO;
 import org.apache.syncope.common.lib.to.AnyObjectTO;
 import org.apache.syncope.common.lib.to.AttrTO;
 import org.apache.syncope.common.lib.to.GroupTO;
+import org.apache.syncope.common.lib.to.ProvisioningResult;
 import org.apache.syncope.common.lib.to.TaskExecTO;
 import org.apache.syncope.common.lib.to.UserTO;
 import org.apache.syncope.common.lib.types.PatchOperation;
@@ -279,28 +283,39 @@ public class App {
         return (T) getObject(response.getLocation(), SchemaService.class, schemaTO.getClass());
     }
 
-    private static UserTO createUser(final UserTO userTO) {
-        final Response response = client.getService(UserService.class).create(userTO, true);
-        if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
-            throw new RuntimeException("Bad response: " + response);
-        }
-        return response.readEntity(UserTO.class);
-    }
-
     private static UserTO readUser(final String username) {
-        return userService.read(Long.valueOf(
-                userService.getUserKey(username).getHeaderString(RESTHeaders.USER_KEY)));
+        return userService.read(Long.valueOf(userService.getUserKey(username).getHeaderString(RESTHeaders.USER_KEY)));
     }
 
-    private static UserTO updateUser(final UserPatch userPatch) {
-        return userService.update(userPatch).readEntity(UserTO.class);
+    private static ProvisioningResult<UserTO> createUser(final UserTO userTO) {
+        return createUser(userTO, true);
     }
 
-    private static UserTO deleteUser(final Long id) {
-        return userService.delete(id).readEntity(UserTO.class);
+    private static ProvisioningResult<UserTO> createUser(final UserTO userTO, final boolean storePassword) {
+        Response response = userService.create(userTO, storePassword);
+        if (response.getStatusInfo().getStatusCode() != Response.Status.CREATED.getStatusCode()) {
+            Exception ex = clientFactory.getExceptionMapper().fromResponse(response);
+            if (ex != null) {
+                throw (RuntimeException) ex;
+            }
+        }
+        return response.readEntity(new GenericType<ProvisioningResult<UserTO>>() {
+        });
     }
 
-    private static AnyObjectTO createAnyObject(final AnyObjectTO anyObjectTO) {
+    private static ProvisioningResult<UserTO> updateUser(final UserPatch userPatch) {
+        return userService.update(userPatch).
+                readEntity(new GenericType<ProvisioningResult<UserTO>>() {
+                });
+    }
+
+    private static ProvisioningResult<UserTO> deleteUser(final Long key) {
+        return userService.delete(key).
+                readEntity(new GenericType<ProvisioningResult<UserTO>>() {
+                });
+    }
+
+    private static ProvisioningResult<AnyObjectTO> createAnyObject(final AnyObjectTO anyObjectTO) {
         Response response = anyObjectService.create(anyObjectTO);
         if (response.getStatusInfo().getStatusCode() != Response.Status.CREATED.getStatusCode()) {
             Exception ex = clientFactory.getExceptionMapper().fromResponse(response);
@@ -308,16 +323,44 @@ public class App {
                 throw (RuntimeException) ex;
             }
         }
-        return response.readEntity(AnyObjectTO.class);
+        return response.readEntity(new GenericType<ProvisioningResult<AnyObjectTO>>() {
+        });
     }
 
-    private static GroupTO createGroup(final GroupTO groupTO) {
-        final Response response = client.getService(GroupService.class).create(groupTO);
-        if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
-            throw new RuntimeException("Bad response: " + response);
-        }
+    private static ProvisioningResult<AnyObjectTO> updateAnyObject(final AnyObjectPatch anyObjectPatch) {
+        return anyObjectService.update(anyObjectPatch).
+                readEntity(new GenericType<ProvisioningResult<AnyObjectTO>>() {
+                });
+    }
 
-        return response.readEntity(GroupTO.class);
+    private static ProvisioningResult<AnyObjectTO> deleteAnyObject(final Long key) {
+        return anyObjectService.delete(key).
+                readEntity(new GenericType<ProvisioningResult<AnyObjectTO>>() {
+                });
+    }
+
+    private static ProvisioningResult<GroupTO> createGroup(final GroupTO groupTO) {
+        Response response = groupService.create(groupTO);
+        if (response.getStatusInfo().getStatusCode() != Response.Status.CREATED.getStatusCode()) {
+            Exception ex = clientFactory.getExceptionMapper().fromResponse(response);
+            if (ex != null) {
+                throw (RuntimeException) ex;
+            }
+        }
+        return response.readEntity(new GenericType<ProvisioningResult<GroupTO>>() {
+        });
+    }
+
+    private static ProvisioningResult<GroupTO> updateGroup(final GroupPatch groupPatch) {
+        return groupService.update(groupPatch).
+                readEntity(new GenericType<ProvisioningResult<GroupTO>>() {
+                });
+    }
+
+    private static ProvisioningResult<GroupTO> deleteGroup(final Long key) {
+        return groupService.delete(key).
+                readEntity(new GenericType<ProvisioningResult<GroupTO>>() {
+                });
     }
 
     private static void init() {
