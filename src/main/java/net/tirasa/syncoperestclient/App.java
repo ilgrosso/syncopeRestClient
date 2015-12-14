@@ -235,7 +235,7 @@ public class App {
     }
 
     private static TaskExecTO execProvisioningTask(final Long taskKey, final int maxWaitSeconds, final boolean dryRun) {
-        AbstractTaskTO taskTO = taskService.read(taskKey);
+        AbstractTaskTO taskTO = taskService.read(taskKey, true);
         assertNotNull(taskTO);
         assertNotNull(taskTO.getExecutions());
 
@@ -253,7 +253,7 @@ public class App {
             } catch (InterruptedException e) {
             }
 
-            taskTO = taskService.read(taskTO.getKey());
+            taskTO = taskService.read(taskTO.getKey(), true);
 
             assertNotNull(taskTO);
             assertNotNull(taskTO.getExecutions());
