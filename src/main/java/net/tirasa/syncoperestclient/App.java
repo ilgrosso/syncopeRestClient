@@ -205,7 +205,7 @@ public class App {
     private static TaskExecTO execSyncTask(final Long taskId, final int maxWaitSeconds,
             final boolean dryRun) {
 
-        AbstractTaskTO taskTO = client.getService(TaskService.class).read(taskId);
+        AbstractTaskTO taskTO = client.getService(TaskService.class).read(taskId, true);
 
         final int preSyncSize = taskTO.getExecutions().size();
         final TaskExecTO execution = client.getService(TaskService.class).execute(taskTO.getId(), dryRun);
@@ -220,7 +220,7 @@ public class App {
             } catch (InterruptedException e) {
             }
 
-            taskTO = client.getService(TaskService.class).read(taskTO.getId());
+            taskTO = client.getService(TaskService.class).read(taskTO.getId(), true);
 
             i++;
         } while (preSyncSize == taskTO.getExecutions().size() && i < maxit);
