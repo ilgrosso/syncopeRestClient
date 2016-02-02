@@ -46,8 +46,10 @@ import org.apache.syncope.common.rest.api.service.PolicyService;
 import org.apache.syncope.common.rest.api.service.ReportService;
 import org.apache.syncope.common.rest.api.service.ResourceService;
 import org.apache.syncope.common.rest.api.service.GroupService;
+import org.apache.syncope.common.rest.api.service.MailTemplateService;
 import org.apache.syncope.common.rest.api.service.RealmService;
 import org.apache.syncope.common.rest.api.service.RelationshipTypeService;
+import org.apache.syncope.common.rest.api.service.ReportTemplateService;
 import org.apache.syncope.common.rest.api.service.RoleService;
 import org.apache.syncope.common.rest.api.service.SchemaService;
 import org.apache.syncope.common.rest.api.service.SecurityQuestionService;
@@ -89,9 +91,9 @@ public class App {
 
     private static final String ANONYMOUS_KEY = "anonymousKey";
 
-    private static final SyncopeClientFactoryBean clientFactory = new SyncopeClientFactoryBean().setAddress(ADDRESS);
+    private static final SyncopeClientFactoryBean CLIENT_FACTORY = new SyncopeClientFactoryBean().setAddress(ADDRESS);
 
-    private static final SyncopeClient client = clientFactory.create(ADMIN_UNAME, ADMIN_PWD);
+    private static final SyncopeClient CLIENT = CLIENT_FACTORY.create(ADMIN_UNAME, ADMIN_PWD);
 
     private static final String RESOURCE_NAME_WS1 = "ws-target-resource-1";
 
@@ -155,11 +157,15 @@ public class App {
 
     private static LoggerService loggerService;
 
+    private static ReportTemplateService reportTemplateService;
+
     private static ReportService reportService;
 
     private static TaskService taskService;
 
     private static WorkflowService workflowService;
+
+    private static MailTemplateService mailTemplateService;
 
     private static NotificationService notificationService;
 
@@ -269,15 +275,15 @@ public class App {
     }
 
     private static <T> T getObject(final URI location, final Class<?> serviceClass, final Class<T> resultClass) {
-        WebClient webClient = WebClient.fromClient(WebClient.client(client.getService(serviceClass)));
-        webClient.accept(clientFactory.getContentType().getMediaType()).to(location.toASCIIString(), false);
+        WebClient webClient = WebClient.fromClient(WebClient.client(CLIENT.getService(serviceClass)));
+        webClient.accept(CLIENT_FACTORY.getContentType().getMediaType()).to(location.toASCIIString(), false);
 
         return webClient.get(resultClass);
     }
 
     @SuppressWarnings("unchecked")
     private static <T extends AbstractSchemaTO> T createSchema(final SchemaType type, final T schemaTO) {
-        Response response = client.getService(SchemaService.class).create(type, schemaTO);
+        Response response = CLIENT.getService(SchemaService.class).create(type, schemaTO);
         if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
             throw new RuntimeException("Bad response: " + response);
         }
@@ -296,7 +302,7 @@ public class App {
     private static ProvisioningResult<UserTO> createUser(final UserTO userTO, final boolean storePassword) {
         Response response = userService.create(userTO, storePassword);
         if (response.getStatusInfo().getStatusCode() != Response.Status.CREATED.getStatusCode()) {
-            Exception ex = clientFactory.getExceptionMapper().fromResponse(response);
+            Exception ex = CLIENT_FACTORY.getExceptionMapper().fromResponse(response);
             if (ex != null) {
                 throw (RuntimeException) ex;
             }
@@ -320,7 +326,7 @@ public class App {
     private static ProvisioningResult<AnyObjectTO> createAnyObject(final AnyObjectTO anyObjectTO) {
         Response response = anyObjectService.create(anyObjectTO);
         if (response.getStatusInfo().getStatusCode() != Response.Status.CREATED.getStatusCode()) {
-            Exception ex = clientFactory.getExceptionMapper().fromResponse(response);
+            Exception ex = CLIENT_FACTORY.getExceptionMapper().fromResponse(response);
             if (ex != null) {
                 throw (RuntimeException) ex;
             }
@@ -344,7 +350,7 @@ public class App {
     private static ProvisioningResult<GroupTO> createGroup(final GroupTO groupTO) {
         Response response = groupService.create(groupTO);
         if (response.getStatusInfo().getStatusCode() != Response.Status.CREATED.getStatusCode()) {
-            Exception ex = clientFactory.getExceptionMapper().fromResponse(response);
+            Exception ex = CLIENT_FACTORY.getExceptionMapper().fromResponse(response);
             if (ex != null) {
                 throw (RuntimeException) ex;
             }
@@ -366,29 +372,31 @@ public class App {
     }
 
     private static void init() {
-        syncopeService = client.getService(SyncopeService.class);
-        domainService = client.getService(DomainService.class);
-        anyTypeClassService = client.getService(AnyTypeClassService.class);
-        anyTypeService = client.getService(AnyTypeService.class);
-        relationshipTypeService = client.getService(RelationshipTypeService.class);
-        realmService = client.getService(RealmService.class);
-        anyObjectService = client.getService(AnyObjectService.class);
-        roleService = client.getService(RoleService.class);
-        userService = client.getService(UserService.class);
-        userWorkflowService = client.getService(UserWorkflowService.class);
-        groupService = client.getService(GroupService.class);
-        resourceService = client.getService(ResourceService.class);
-        configurationService = client.getService(ConfigurationService.class);
-        connectorService = client.getService(ConnectorService.class);
-        loggerService = client.getService(LoggerService.class);
-        reportService = client.getService(ReportService.class);
-        taskService = client.getService(TaskService.class);
-        policyService = client.getService(PolicyService.class);
-        workflowService = client.getService(WorkflowService.class);
-        notificationService = client.getService(NotificationService.class);
-        schemaService = client.getService(SchemaService.class);
-        userSelfService = client.getService(UserSelfService.class);
-        securityQuestionService = client.getService(SecurityQuestionService.class);
+        syncopeService = CLIENT.getService(SyncopeService.class);
+        domainService = CLIENT.getService(DomainService.class);
+        anyTypeClassService = CLIENT.getService(AnyTypeClassService.class);
+        anyTypeService = CLIENT.getService(AnyTypeService.class);
+        relationshipTypeService = CLIENT.getService(RelationshipTypeService.class);
+        realmService = CLIENT.getService(RealmService.class);
+        anyObjectService = CLIENT.getService(AnyObjectService.class);
+        roleService = CLIENT.getService(RoleService.class);
+        userService = CLIENT.getService(UserService.class);
+        userWorkflowService = CLIENT.getService(UserWorkflowService.class);
+        groupService = CLIENT.getService(GroupService.class);
+        resourceService = CLIENT.getService(ResourceService.class);
+        configurationService = CLIENT.getService(ConfigurationService.class);
+        connectorService = CLIENT.getService(ConnectorService.class);
+        loggerService = CLIENT.getService(LoggerService.class);
+        reportTemplateService = CLIENT.getService(ReportTemplateService.class);
+        reportService = CLIENT.getService(ReportService.class);
+        taskService = CLIENT.getService(TaskService.class);
+        policyService = CLIENT.getService(PolicyService.class);
+        workflowService = CLIENT.getService(WorkflowService.class);
+        mailTemplateService = CLIENT.getService(MailTemplateService.class);
+        notificationService = CLIENT.getService(NotificationService.class);
+        schemaService = CLIENT.getService(SchemaService.class);
+        userSelfService = CLIENT.getService(UserSelfService.class);
+        securityQuestionService = CLIENT.getService(SecurityQuestionService.class);
     }
 
     public static void main(final String[] args) {
