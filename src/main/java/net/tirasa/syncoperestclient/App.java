@@ -1,9 +1,5 @@
 package net.tirasa.syncoperestclient;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -26,9 +22,9 @@ import org.apache.syncope.common.lib.to.AbstractSchemaTO;
 import org.apache.syncope.common.lib.to.AbstractTaskTO;
 import org.apache.syncope.common.lib.to.AnyObjectTO;
 import org.apache.syncope.common.lib.to.AttrTO;
+import org.apache.syncope.common.lib.to.ExecTO;
 import org.apache.syncope.common.lib.to.GroupTO;
 import org.apache.syncope.common.lib.to.ProvisioningResult;
-import org.apache.syncope.common.lib.to.TaskExecTO;
 import org.apache.syncope.common.lib.to.UserTO;
 import org.apache.syncope.common.lib.types.PatchOperation;
 import org.apache.syncope.common.lib.types.SchemaType;
@@ -59,6 +55,10 @@ import org.apache.syncope.common.rest.api.service.UserSelfService;
 import org.apache.syncope.common.rest.api.service.UserService;
 import org.apache.syncope.common.rest.api.service.UserWorkflowService;
 import org.apache.syncope.common.rest.api.service.WorkflowService;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 public class App {
 
@@ -241,13 +241,13 @@ public class App {
         return getSampleUserTO(getUUIDString() + email);
     }
 
-    private static TaskExecTO execProvisioningTask(final Long taskKey, final int maxWaitSeconds, final boolean dryRun) {
+    private static ExecTO execProvisioningTask(final Long taskKey, final int maxWaitSeconds, final boolean dryRun) {
         AbstractTaskTO taskTO = taskService.read(taskKey, true);
         assertNotNull(taskTO);
         assertNotNull(taskTO.getExecutions());
 
         int preSyncSize = taskTO.getExecutions().size();
-        TaskExecTO execution = taskService.execute(
+        ExecTO execution = taskService.execute(
                 new ExecuteQuery.Builder().key(taskTO.getKey()).dryRun(dryRun).build());
         assertEquals("JOB_FIRED", execution.getStatus());
 
