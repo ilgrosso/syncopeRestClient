@@ -1,5 +1,9 @@
 package net.tirasa.syncoperestclient;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -28,7 +32,6 @@ import org.apache.syncope.common.lib.to.ProvisioningResult;
 import org.apache.syncope.common.lib.to.UserTO;
 import org.apache.syncope.common.lib.types.PatchOperation;
 import org.apache.syncope.common.lib.types.SchemaType;
-import org.apache.syncope.common.rest.api.RESTHeaders;
 import org.apache.syncope.common.rest.api.beans.ExecuteQuery;
 import org.apache.syncope.common.rest.api.service.AnyObjectService;
 import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
@@ -55,10 +58,6 @@ import org.apache.syncope.common.rest.api.service.UserSelfService;
 import org.apache.syncope.common.rest.api.service.UserService;
 import org.apache.syncope.common.rest.api.service.UserWorkflowService;
 import org.apache.syncope.common.rest.api.service.WorkflowService;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 public class App {
 
@@ -241,7 +240,7 @@ public class App {
         return getSampleUserTO(getUUIDString() + email);
     }
 
-    private static ExecTO execProvisioningTask(final Long taskKey, final int maxWaitSeconds, final boolean dryRun) {
+    private static ExecTO execProvisioningTask(final String taskKey, final int maxWaitSeconds, final boolean dryRun) {
         AbstractTaskTO taskTO = taskService.read(taskKey, true);
         assertNotNull(taskTO);
         assertNotNull(taskTO.getExecutions());
@@ -291,10 +290,6 @@ public class App {
         return (T) getObject(response.getLocation(), SchemaService.class, schemaTO.getClass());
     }
 
-    private static UserTO readUser(final String username) {
-        return userService.read(Long.valueOf(userService.getUserKey(username).getHeaderString(RESTHeaders.USER_KEY)));
-    }
-
     private static ProvisioningResult<UserTO> createUser(final UserTO userTO) {
         return createUser(userTO, true);
     }
@@ -317,7 +312,7 @@ public class App {
                 });
     }
 
-    private static ProvisioningResult<UserTO> deleteUser(final Long key) {
+    private static ProvisioningResult<UserTO> deleteUser(final String key) {
         return userService.delete(key).
                 readEntity(new GenericType<ProvisioningResult<UserTO>>() {
                 });
@@ -341,7 +336,7 @@ public class App {
                 });
     }
 
-    private static ProvisioningResult<AnyObjectTO> deleteAnyObject(final Long key) {
+    private static ProvisioningResult<AnyObjectTO> deleteAnyObject(final String key) {
         return anyObjectService.delete(key).
                 readEntity(new GenericType<ProvisioningResult<AnyObjectTO>>() {
                 });
@@ -365,7 +360,7 @@ public class App {
                 });
     }
 
-    private static ProvisioningResult<GroupTO> deleteGroup(final Long key) {
+    private static ProvisioningResult<GroupTO> deleteGroup(final String key) {
         return groupService.delete(key).
                 readEntity(new GenericType<ProvisioningResult<GroupTO>>() {
                 });
@@ -402,6 +397,6 @@ public class App {
     public static void main(final String[] args) {
         init();
 
-        // *do* something
+        // *do* something        
     }
 }
