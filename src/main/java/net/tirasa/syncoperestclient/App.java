@@ -397,6 +397,6 @@ public class App {
     public static void main(final String[] args) {
         init();
 
-        // *do* something        
+        // *do* something
     }
 }
