@@ -32,6 +32,7 @@ import org.apache.syncope.common.lib.to.ProvisioningResult;
 import org.apache.syncope.common.lib.to.UserTO;
 import org.apache.syncope.common.lib.types.PatchOperation;
 import org.apache.syncope.common.lib.types.SchemaType;
+import org.apache.syncope.common.rest.api.RESTHeaders;
 import org.apache.syncope.common.rest.api.beans.ExecuteQuery;
 import org.apache.syncope.common.rest.api.service.AnyObjectService;
 import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
@@ -277,7 +278,10 @@ public class App {
         WebClient webClient = WebClient.fromClient(WebClient.client(CLIENT.getService(serviceClass)));
         webClient.accept(CLIENT_FACTORY.getContentType().getMediaType()).to(location.toASCIIString(), false);
 
-        return webClient.get(resultClass);
+        return webClient.
+                header(RESTHeaders.DOMAIN, CLIENT.getDomain()).
+                header(RESTHeaders.TOKEN, CLIENT.getJWT()).
+                get(resultClass);
     }
 
     @SuppressWarnings("unchecked")
