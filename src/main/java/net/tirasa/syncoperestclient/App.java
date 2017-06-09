@@ -40,6 +40,7 @@ import org.apache.syncope.common.rest.api.service.AnyTypeService;
 import org.apache.syncope.common.rest.api.service.ConfigurationService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
 import org.apache.syncope.common.rest.api.service.DomainService;
+import org.apache.syncope.common.rest.api.service.DynRealmService;
 import org.apache.syncope.common.rest.api.service.LoggerService;
 import org.apache.syncope.common.rest.api.service.NotificationService;
 import org.apache.syncope.common.rest.api.service.PolicyService;
@@ -144,6 +145,8 @@ public class App {
     private static AnyObjectService anyObjectService;
 
     private static RoleService roleService;
+
+    private static DynRealmService dynRealmService;
 
     private static UserService userService;
 
@@ -379,6 +382,7 @@ public class App {
         realmService = CLIENT.getService(RealmService.class);
         anyObjectService = CLIENT.getService(AnyObjectService.class);
         roleService = CLIENT.getService(RoleService.class);
+        dynRealmService = CLIENT.getService(DynRealmService.class);
         userService = CLIENT.getService(UserService.class);
         userWorkflowService = CLIENT.getService(UserWorkflowService.class);
         groupService = CLIENT.getService(GroupService.class);
