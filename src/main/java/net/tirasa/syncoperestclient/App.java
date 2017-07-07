@@ -38,6 +38,7 @@ import org.apache.syncope.common.rest.api.service.AnyObjectService;
 import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
 import org.apache.syncope.common.rest.api.service.AnyTypeService;
 import org.apache.syncope.common.rest.api.service.ConfigurationService;
+import org.apache.syncope.common.rest.api.service.ConnectorHistoryService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
 import org.apache.syncope.common.rest.api.service.DomainService;
 import org.apache.syncope.common.rest.api.service.DynRealmService;
@@ -51,6 +52,7 @@ import org.apache.syncope.common.rest.api.service.MailTemplateService;
 import org.apache.syncope.common.rest.api.service.RealmService;
 import org.apache.syncope.common.rest.api.service.RelationshipTypeService;
 import org.apache.syncope.common.rest.api.service.ReportTemplateService;
+import org.apache.syncope.common.rest.api.service.ResourceHistoryService;
 import org.apache.syncope.common.rest.api.service.RoleService;
 import org.apache.syncope.common.rest.api.service.SchemaService;
 import org.apache.syncope.common.rest.api.service.SecurityQuestionService;
@@ -154,9 +156,13 @@ public class App {
 
     private static ResourceService resourceService;
 
+    private static ResourceHistoryService resourceHistoryService;
+
     private static ConfigurationService configurationService;
 
     private static ConnectorService connectorService;
+
+    private static ConnectorHistoryService connectorHistoryService;
 
     private static LoggerService loggerService;
 
@@ -384,11 +390,14 @@ public class App {
         roleService = CLIENT.getService(RoleService.class);
         dynRealmService = CLIENT.getService(DynRealmService.class);
         userService = CLIENT.getService(UserService.class);
+        userSelfService = CLIENT.getService(UserSelfService.class);
         userWorkflowService = CLIENT.getService(UserWorkflowService.class);
         groupService = CLIENT.getService(GroupService.class);
         resourceService = CLIENT.getService(ResourceService.class);
+        resourceHistoryService = CLIENT.getService(ResourceHistoryService.class);
         configurationService = CLIENT.getService(ConfigurationService.class);
         connectorService = CLIENT.getService(ConnectorService.class);
+        connectorHistoryService = CLIENT.getService(ConnectorHistoryService.class);
         loggerService = CLIENT.getService(LoggerService.class);
         reportTemplateService = CLIENT.getService(ReportTemplateService.class);
         reportService = CLIENT.getService(ReportService.class);
@@ -398,7 +407,6 @@ public class App {
         mailTemplateService = CLIENT.getService(MailTemplateService.class);
         notificationService = CLIENT.getService(NotificationService.class);
         schemaService = CLIENT.getService(SchemaService.class);
-        userSelfService = CLIENT.getService(UserSelfService.class);
         securityQuestionService = CLIENT.getService(SecurityQuestionService.class);
     }
 
