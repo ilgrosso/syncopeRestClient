@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.UUID;
 import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.syncope.client.lib.SyncopeClient;
@@ -280,7 +281,7 @@ public class App {
 
         return webClient.
                 header(RESTHeaders.DOMAIN, CLIENT.getDomain()).
-                header(RESTHeaders.TOKEN, CLIENT.getJWT()).
+                header(HttpHeaders.AUTHORIZATION, "Bearer " + CLIENT.getJWT()).
                 get(resultClass);
     }
 
