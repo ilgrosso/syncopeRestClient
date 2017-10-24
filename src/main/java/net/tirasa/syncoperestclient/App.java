@@ -1,8 +1,8 @@
 package net.tirasa.syncoperestclient;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,6 +47,7 @@ import org.apache.syncope.common.rest.api.service.PolicyService;
 import org.apache.syncope.common.rest.api.service.ReportService;
 import org.apache.syncope.common.rest.api.service.ResourceService;
 import org.apache.syncope.common.rest.api.service.GroupService;
+import org.apache.syncope.common.rest.api.service.ImplementationService;
 import org.apache.syncope.common.rest.api.service.MailTemplateService;
 import org.apache.syncope.common.rest.api.service.RealmService;
 import org.apache.syncope.common.rest.api.service.RelationshipTypeService;
@@ -133,6 +134,8 @@ public class App {
     private static SyncopeService syncopeService;
 
     private static DomainService domainService;
+
+    private static ImplementationService implementationService;
 
     private static AnyTypeClassService anyTypeClassService;
 
@@ -374,6 +377,7 @@ public class App {
     private static void init() {
         syncopeService = CLIENT.getService(SyncopeService.class);
         domainService = CLIENT.getService(DomainService.class);
+        implementationService = CLIENT.getService(ImplementationService.class);
         anyTypeClassService = CLIENT.getService(AnyTypeClassService.class);
         anyTypeService = CLIENT.getService(AnyTypeService.class);
         relationshipTypeService = CLIENT.getService(RelationshipTypeService.class);
