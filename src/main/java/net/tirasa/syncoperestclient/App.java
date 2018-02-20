@@ -23,8 +23,8 @@ import org.apache.syncope.common.lib.patch.AnyObjectPatch;
 import org.apache.syncope.common.lib.patch.AttrPatch;
 import org.apache.syncope.common.lib.patch.GroupPatch;
 import org.apache.syncope.common.lib.patch.UserPatch;
-import org.apache.syncope.common.lib.to.AbstractSchemaTO;
-import org.apache.syncope.common.lib.to.AbstractTaskTO;
+import org.apache.syncope.common.lib.to.SchemaTO;
+import org.apache.syncope.common.lib.to.TaskTO;
 import org.apache.syncope.common.lib.to.AnyObjectTO;
 import org.apache.syncope.common.lib.to.AttrTO;
 import org.apache.syncope.common.lib.to.ExecTO;
@@ -33,6 +33,7 @@ import org.apache.syncope.common.lib.to.ProvisioningResult;
 import org.apache.syncope.common.lib.to.UserTO;
 import org.apache.syncope.common.lib.types.PatchOperation;
 import org.apache.syncope.common.lib.types.SchemaType;
+import org.apache.syncope.common.lib.types.TaskType;
 import org.apache.syncope.common.rest.api.RESTHeaders;
 import org.apache.syncope.common.rest.api.beans.ExecuteQuery;
 import org.apache.syncope.common.rest.api.service.AnyObjectService;
@@ -245,8 +246,11 @@ public class App {
         return getSampleUserTO(getUUIDString() + email);
     }
 
-    private static ExecTO execProvisioningTask(final String taskKey, final int maxWaitSeconds, final boolean dryRun) {
-        AbstractTaskTO taskTO = taskService.read(taskKey, true);
+    public static ExecTO execProvisioningTask(
+            final TaskService taskService, final TaskType type, final String taskKey,
+            final int maxWaitSeconds, final boolean dryRun) {
+
+        TaskTO taskTO = taskService.read(type, taskKey, true);
         assertNotNull(taskTO);
         assertNotNull(taskTO.getExecutions());
 
@@ -258,14 +262,14 @@ public class App {
         int i = 0;
         int maxit = maxWaitSeconds;
 
-        // wait for sync completion (executions incremented)
+        // wait for completion (executions incremented)
         do {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
             }
 
-            taskTO = taskService.read(taskTO.getKey(), true);
+            taskTO = taskService.read(type, taskTO.getKey(), true);
 
             assertNotNull(taskTO);
             assertNotNull(taskTO.getExecutions());
@@ -289,7 +293,7 @@ public class App {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T extends AbstractSchemaTO> T createSchema(final SchemaType type, final T schemaTO) {
+    private static <T extends SchemaTO> T createSchema(final SchemaType type, final T schemaTO) {
         Response response = CLIENT.getService(SchemaService.class).create(type, schemaTO);
         if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
             throw new RuntimeException("Bad response: " + response);
