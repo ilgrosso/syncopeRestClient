@@ -39,6 +39,7 @@ import org.apache.syncope.common.rest.api.beans.ExecuteQuery;
 import org.apache.syncope.common.rest.api.service.AnyObjectService;
 import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
 import org.apache.syncope.common.rest.api.service.AnyTypeService;
+import org.apache.syncope.common.rest.api.service.ApplicationService;
 import org.apache.syncope.common.rest.api.service.ConfigurationService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
 import org.apache.syncope.common.rest.api.service.DomainService;
@@ -135,6 +136,8 @@ public class App {
     private static SyncopeService syncopeService;
 
     private static DomainService domainService;
+
+    private static ApplicationService applicationService;
 
     private static ImplementationService implementationService;
 
@@ -381,6 +384,7 @@ public class App {
     private static void init() {
         syncopeService = CLIENT.getService(SyncopeService.class);
         domainService = CLIENT.getService(DomainService.class);
+        applicationService = CLIENT.getService(ApplicationService.class);
         implementationService = CLIENT.getService(ImplementationService.class);
         anyTypeClassService = CLIENT.getService(AnyTypeClassService.class);
         anyTypeService = CLIENT.getService(AnyTypeService.class);
