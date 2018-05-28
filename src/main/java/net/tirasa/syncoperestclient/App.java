@@ -52,6 +52,7 @@ import org.apache.syncope.common.rest.api.service.ResourceService;
 import org.apache.syncope.common.rest.api.service.GroupService;
 import org.apache.syncope.common.rest.api.service.MailTemplateService;
 import org.apache.syncope.common.rest.api.service.RealmService;
+import org.apache.syncope.common.rest.api.service.ReconciliationService;
 import org.apache.syncope.common.rest.api.service.RelationshipTypeService;
 import org.apache.syncope.common.rest.api.service.ReportTemplateService;
 import org.apache.syncope.common.rest.api.service.ResourceHistoryService;
@@ -173,6 +174,8 @@ public class App {
     private static ReportService reportService;
 
     private static TaskService taskService;
+
+    private static ReconciliationService reconciliationService;
 
     private static WorkflowService workflowService;
 
@@ -407,6 +410,7 @@ public class App {
         reportTemplateService = CLIENT.getService(ReportTemplateService.class);
         reportService = CLIENT.getService(ReportService.class);
         taskService = CLIENT.getService(TaskService.class);
+        reconciliationService = CLIENT.getService(ReconciliationService.class);
         policyService = CLIENT.getService(PolicyService.class);
         workflowService = CLIENT.getService(WorkflowService.class);
         mailTemplateService = CLIENT.getService(MailTemplateService.class);
