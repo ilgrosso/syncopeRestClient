@@ -40,6 +40,7 @@ import org.apache.syncope.common.rest.api.service.AnyObjectService;
 import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
 import org.apache.syncope.common.rest.api.service.AnyTypeService;
 import org.apache.syncope.common.rest.api.service.ApplicationService;
+import org.apache.syncope.common.rest.api.service.BpmnProcessService;
 import org.apache.syncope.common.rest.api.service.ConfigurationService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
 import org.apache.syncope.common.rest.api.service.DomainService;
@@ -60,10 +61,9 @@ import org.apache.syncope.common.rest.api.service.SchemaService;
 import org.apache.syncope.common.rest.api.service.SecurityQuestionService;
 import org.apache.syncope.common.rest.api.service.SyncopeService;
 import org.apache.syncope.common.rest.api.service.TaskService;
+import org.apache.syncope.common.rest.api.service.UserRequestService;
 import org.apache.syncope.common.rest.api.service.UserSelfService;
 import org.apache.syncope.common.rest.api.service.UserService;
-import org.apache.syncope.common.rest.api.service.UserWorkflowService;
-import org.apache.syncope.common.rest.api.service.WorkflowService;
 
 public class App {
 
@@ -174,8 +174,6 @@ public class App {
 
     private static ReconciliationService reconciliationService;
 
-    private static WorkflowService workflowService;
-
     private static MailTemplateService mailTemplateService;
 
     private static NotificationService notificationService;
@@ -184,11 +182,13 @@ public class App {
 
     private static UserSelfService userSelfService;
 
-    private static UserWorkflowService userWorkflowService;
-
     private static PolicyService policyService;
 
     private static SecurityQuestionService securityQuestionService;
+
+    private static UserRequestService userRequestService;
+
+    private static BpmnProcessService bpmnProcessService;
 
     private static AttrTO attrTO(final String schema, final String value) {
         return new AttrTO.Builder().schema(schema).value(value).build();
@@ -396,7 +396,6 @@ public class App {
         anyObjectService = CLIENT.getService(AnyObjectService.class);
         roleService = CLIENT.getService(RoleService.class);
         userService = CLIENT.getService(UserService.class);
-        userWorkflowService = CLIENT.getService(UserWorkflowService.class);
         groupService = CLIENT.getService(GroupService.class);
         resourceService = CLIENT.getService(ResourceService.class);
         configurationService = CLIENT.getService(ConfigurationService.class);
@@ -407,12 +406,13 @@ public class App {
         taskService = CLIENT.getService(TaskService.class);
         reconciliationService = CLIENT.getService(ReconciliationService.class);
         policyService = CLIENT.getService(PolicyService.class);
-        workflowService = CLIENT.getService(WorkflowService.class);
         mailTemplateService = CLIENT.getService(MailTemplateService.class);
         notificationService = CLIENT.getService(NotificationService.class);
         schemaService = CLIENT.getService(SchemaService.class);
         userSelfService = CLIENT.getService(UserSelfService.class);
         securityQuestionService = CLIENT.getService(SecurityQuestionService.class);
+        userRequestService = CLIENT.getService(UserRequestService.class);
+        bpmnProcessService = CLIENT.getService(BpmnProcessService.class);
     }
 
     public static void main(final String[] args) {
