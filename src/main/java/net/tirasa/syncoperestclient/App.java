@@ -7,31 +7,32 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 import java.util.UUID;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.syncope.client.lib.SyncopeClient;
 import org.apache.syncope.client.lib.SyncopeClientFactoryBean;
+import org.apache.syncope.common.lib.Attr;
 import org.apache.syncope.common.lib.SyncopeConstants;
-import org.apache.syncope.common.lib.patch.AnyObjectPatch;
-import org.apache.syncope.common.lib.patch.AttrPatch;
-import org.apache.syncope.common.lib.patch.GroupPatch;
-import org.apache.syncope.common.lib.patch.UserPatch;
+import org.apache.syncope.common.lib.request.AnyObjectCR;
+import org.apache.syncope.common.lib.request.AnyObjectUR;
+import org.apache.syncope.common.lib.request.AttrPatch;
+import org.apache.syncope.common.lib.request.GroupCR;
+import org.apache.syncope.common.lib.request.GroupUR;
+import org.apache.syncope.common.lib.request.UserCR;
+import org.apache.syncope.common.lib.request.UserUR;
 import org.apache.syncope.common.lib.to.SchemaTO;
 import org.apache.syncope.common.lib.to.TaskTO;
 import org.apache.syncope.common.lib.to.AnyObjectTO;
-import org.apache.syncope.common.lib.to.AttrTO;
 import org.apache.syncope.common.lib.to.ExecTO;
 import org.apache.syncope.common.lib.to.GroupTO;
 import org.apache.syncope.common.lib.to.ProvisioningResult;
 import org.apache.syncope.common.lib.to.UserTO;
-import org.apache.syncope.common.lib.types.PatchOperation;
 import org.apache.syncope.common.lib.types.SchemaType;
 import org.apache.syncope.common.lib.types.TaskType;
 import org.apache.syncope.common.rest.api.RESTHeaders;
@@ -190,12 +191,12 @@ public class App {
 
     private static BpmnProcessService bpmnProcessService;
 
-    private static AttrTO attrTO(final String schema, final String value) {
-        return new AttrTO.Builder().schema(schema).value(value).build();
+    private static Attr attr(final String schema, final String value) {
+        return new Attr.Builder(schema).value(value).build();
     }
 
     private static AttrPatch attrAddReplacePatch(final String schema, final String value) {
-        return new AttrPatch.Builder().operation(PatchOperation.ADD_REPLACE).attrTO(attrTO(schema, value)).build();
+        return new AttrPatch.Builder(attr(schema, value)).build();
     }
 
     private static String getUUIDString() {
@@ -206,7 +207,7 @@ public class App {
         AnyObjectTO anyObjectTO = new AnyObjectTO();
         anyObjectTO.setRealm(SyncopeConstants.ROOT_REALM);
         anyObjectTO.setType("PRINTER");
-        anyObjectTO.getPlainAttrs().add(attrTO("location", location + getUUIDString()));
+        anyObjectTO.getPlainAttrs().add(attr("location", location + getUUIDString()));
 
         anyObjectTO.getResources().add(RESOURCE_NAME_DBSCRIPTED);
         return anyObjectTO;
@@ -222,34 +223,27 @@ public class App {
     private static GroupTO getSampleGroupTO(final String name) {
         final GroupTO groupTO = getBasicSampleGroupTO(name);
 
-        groupTO.getPlainAttrs().add(attrTO("icon", "anIcon"));
+        groupTO.getPlainAttrs().add(attr("icon", "anIcon"));
 
         groupTO.getResources().add(RESOURCE_NAME_LDAP);
         return groupTO;
     }
 
-    public static UserTO getSampleUserTO(final String email) {
-        String uid = email;
-        UserTO userTO = new UserTO();
-        userTO.setRealm("/");
-        userTO.setPassword("password123");
-        userTO.setUsername(uid);
-
-        userTO.getPlainAttrs().add(attrTO("fullname", uid));
-        userTO.getPlainAttrs().add(attrTO("firstname", uid));
-        userTO.getPlainAttrs().add(attrTO("surname", "surname"));
-        userTO.getPlainAttrs().add(attrTO("type", "a type"));
-        userTO.getPlainAttrs().add(attrTO("userId", uid));
-        userTO.getPlainAttrs().add(attrTO("email", uid));
-        DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        userTO.getPlainAttrs().add(attrTO("loginDate", sdf.format(new Date())));
-        userTO.getDerAttrs().add(attrTO("cn", null));
-        userTO.getVirAttrs().add(attrTO("virtualdata", "virtualvalue"));
-        return userTO;
+    public static UserCR getSampleUserCR(final String email) {
+        return new UserCR.Builder(SyncopeConstants.ROOT_REALM, email).
+                password("password123").
+                plainAttr(attr("fullname", email)).
+                plainAttr(attr("firstname", email)).
+                plainAttr(attr("surname", "surname")).
+                plainAttr(attr("ctype", "a type")).
+                plainAttr(attr("userId", email)).
+                plainAttr(attr("email", email)).
+                plainAttr(attr("loginDate", DateFormatUtils.ISO_8601_EXTENDED_DATETIME_FORMAT.format(new Date()))).
+                build();
     }
 
-    private static UserTO getUniqueSampleUserTO(final String email) {
-        return getSampleUserTO(getUUIDString() + email);
+    private static UserCR getUniqueSampleUserCR(final String email) {
+        return getSampleUserCR(getUUIDString() + email);
     }
 
     public static ExecTO execProvisioningTask(
@@ -308,12 +302,8 @@ public class App {
         return (T) getObject(response.getLocation(), SchemaService.class, schemaTO.getClass());
     }
 
-    private static ProvisioningResult<UserTO> createUser(final UserTO userTO) {
-        return createUser(userTO, true);
-    }
-
-    private static ProvisioningResult<UserTO> createUser(final UserTO userTO, final boolean storePassword) {
-        Response response = userService.create(userTO, storePassword);
+    private static ProvisioningResult<UserTO> createUser(final UserCR req) {
+        Response response = userService.create(req);
         if (response.getStatusInfo().getStatusCode() != Response.Status.CREATED.getStatusCode()) {
             Exception ex = CLIENT_FACTORY.getExceptionMapper().fromResponse(response);
             if (ex != null) {
@@ -324,8 +314,8 @@ public class App {
         });
     }
 
-    private static ProvisioningResult<UserTO> updateUser(final UserPatch userPatch) {
-        return userService.update(userPatch).
+    private static ProvisioningResult<UserTO> updateUser(final UserUR req) {
+        return userService.update(req).
                 readEntity(new GenericType<ProvisioningResult<UserTO>>() {
                 });
     }
@@ -336,8 +326,8 @@ public class App {
                 });
     }
 
-    private static ProvisioningResult<AnyObjectTO> createAnyObject(final AnyObjectTO anyObjectTO) {
-        Response response = anyObjectService.create(anyObjectTO);
+    private static ProvisioningResult<AnyObjectTO> createAnyObject(final AnyObjectCR req) {
+        Response response = anyObjectService.create(req);
         if (response.getStatusInfo().getStatusCode() != Response.Status.CREATED.getStatusCode()) {
             Exception ex = CLIENT_FACTORY.getExceptionMapper().fromResponse(response);
             if (ex != null) {
@@ -348,8 +338,8 @@ public class App {
         });
     }
 
-    private static ProvisioningResult<AnyObjectTO> updateAnyObject(final AnyObjectPatch anyObjectPatch) {
-        return anyObjectService.update(anyObjectPatch).
+    private static ProvisioningResult<AnyObjectTO> updateAnyObject(final AnyObjectUR req) {
+        return anyObjectService.update(req).
                 readEntity(new GenericType<ProvisioningResult<AnyObjectTO>>() {
                 });
     }
@@ -360,8 +350,8 @@ public class App {
                 });
     }
 
-    private static ProvisioningResult<GroupTO> createGroup(final GroupTO groupTO) {
-        Response response = groupService.create(groupTO);
+    private static ProvisioningResult<GroupTO> createGroup(final GroupCR req) {
+        Response response = groupService.create(req);
         if (response.getStatusInfo().getStatusCode() != Response.Status.CREATED.getStatusCode()) {
             Exception ex = CLIENT_FACTORY.getExceptionMapper().fromResponse(response);
             if (ex != null) {
@@ -372,8 +362,8 @@ public class App {
         });
     }
 
-    private static ProvisioningResult<GroupTO> updateGroup(final GroupPatch groupPatch) {
-        return groupService.update(groupPatch).
+    private static ProvisioningResult<GroupTO> updateGroup(final GroupUR req) {
+        return groupService.update(req).
                 readEntity(new GenericType<ProvisioningResult<GroupTO>>() {
                 });
     }
