@@ -42,7 +42,6 @@ import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
 import org.apache.syncope.common.rest.api.service.AnyTypeService;
 import org.apache.syncope.common.rest.api.service.ApplicationService;
 import org.apache.syncope.common.rest.api.service.BpmnProcessService;
-import org.apache.syncope.common.rest.api.service.ConfigurationService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
 import org.apache.syncope.common.rest.api.service.DomainService;
 import org.apache.syncope.common.rest.api.service.LoggerService;
@@ -160,8 +159,6 @@ public class App {
     private static GroupService groupService;
 
     private static ResourceService resourceService;
-
-    private static ConfigurationService configurationService;
 
     private static ConnectorService connectorService;
 
@@ -388,7 +385,6 @@ public class App {
         userService = CLIENT.getService(UserService.class);
         groupService = CLIENT.getService(GroupService.class);
         resourceService = CLIENT.getService(ResourceService.class);
-        configurationService = CLIENT.getService(ConfigurationService.class);
         connectorService = CLIENT.getService(ConnectorService.class);
         loggerService = CLIENT.getService(LoggerService.class);
         reportTemplateService = CLIENT.getService(ReportTemplateService.class);
