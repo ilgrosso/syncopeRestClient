@@ -88,18 +88,6 @@ public class App {
         }
     }
 
-    private static final String ADMIN_UNAME = "admin";
-
-    private static final String ADMIN_PWD = "password";
-
-    private static final String ANONYMOUS_UNAME = "anonymous";
-
-    private static final String ANONYMOUS_KEY = "anonymousKey";
-
-    private static final SyncopeClientFactoryBean CLIENT_FACTORY = new SyncopeClientFactoryBean().setAddress(ADDRESS);
-
-    private static final SyncopeClient CLIENT = CLIENT_FACTORY.create(ADMIN_UNAME, ADMIN_PWD);
-
     private static final String RESOURCE_NAME_WS1 = "ws-target-resource-1";
 
     private static final String RESOURCE_NAME_WS2 = "ws-target-resource-2";
@@ -133,6 +121,18 @@ public class App {
     private static final String RESOURCE_NAME_MAPPINGS2 = "ws-target-resource-list-mappings-2";
 
     private static final String RESOURCE_NAME_DBSCRIPTED = "resource-db-scripted";
+
+    private static final String ADMIN_UNAME = "admin";
+
+    private static final String ADMIN_PWD = "password";
+
+    private static final String ANONYMOUS_UNAME = "anonymous";
+
+    private static final String ANONYMOUS_KEY = "anonymousKey";
+
+    private static SyncopeClientFactoryBean CLIENT_FACTORY;
+
+    private static SyncopeClient CLIENT;
 
     private static SyncopeService syncopeService;
 
@@ -372,6 +372,9 @@ public class App {
     }
 
     private static void init() {
+        CLIENT_FACTORY = new SyncopeClientFactoryBean().setAddress(ADDRESS);
+        CLIENT = CLIENT_FACTORY.create(ADMIN_UNAME, ADMIN_PWD);
+
         syncopeService = CLIENT.getService(SyncopeService.class);
         domainService = CLIENT.getService(DomainService.class);
         applicationService = CLIENT.getService(ApplicationService.class);
@@ -401,7 +404,7 @@ public class App {
         bpmnProcessService = CLIENT.getService(BpmnProcessService.class);
     }
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws Exception {
         init();
 
         // *do* something
