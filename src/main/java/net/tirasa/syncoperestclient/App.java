@@ -43,7 +43,6 @@ import org.apache.syncope.common.rest.api.service.AnyTypeService;
 import org.apache.syncope.common.rest.api.service.ApplicationService;
 import org.apache.syncope.common.rest.api.service.BpmnProcessService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
-import org.apache.syncope.common.rest.api.service.DomainService;
 import org.apache.syncope.common.rest.api.service.LoggerService;
 import org.apache.syncope.common.rest.api.service.NotificationService;
 import org.apache.syncope.common.rest.api.service.PolicyService;
@@ -135,8 +134,6 @@ public class App {
     private static SyncopeClient CLIENT;
 
     private static SyncopeService syncopeService;
-
-    private static DomainService domainService;
 
     private static ApplicationService applicationService;
 
@@ -376,7 +373,6 @@ public class App {
         CLIENT = CLIENT_FACTORY.create(ADMIN_UNAME, ADMIN_PWD);
 
         syncopeService = CLIENT.getService(SyncopeService.class);
-        domainService = CLIENT.getService(DomainService.class);
         applicationService = CLIENT.getService(ApplicationService.class);
         implementationService = CLIENT.getService(ImplementationService.class);
         anyTypeClassService = CLIENT.getService(AnyTypeClassService.class);

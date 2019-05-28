@@ -19,6 +19,11 @@
       <version>${syncope.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.apache.syncope.client.am</groupId>
+      <artifactId>syncope-client-am-lib</artifactId>
+      <version>${syncope.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.syncope.ext.flowable</groupId>
       <artifactId>syncope-ext-flowable-rest-api</artifactId>
       <version>${syncope.version}</version>
