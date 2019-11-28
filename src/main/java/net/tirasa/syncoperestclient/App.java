@@ -41,6 +41,7 @@ import org.apache.syncope.common.rest.api.service.AnyObjectService;
 import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
 import org.apache.syncope.common.rest.api.service.AnyTypeService;
 import org.apache.syncope.common.rest.api.service.ApplicationService;
+import org.apache.syncope.common.rest.api.service.AuditService;
 import org.apache.syncope.common.rest.api.service.BpmnProcessService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
 import org.apache.syncope.common.rest.api.service.GatewayRouteService;
@@ -187,6 +188,8 @@ public class App {
     private static BpmnProcessService bpmnProcessService;
 
     private static GatewayRouteService gatewayRouteService;
+
+    private static AuditService auditService;
 
     private static Attr attr(final String schema, final String value) {
         return new Attr.Builder(schema).value(value).build();
@@ -402,6 +405,7 @@ public class App {
         userRequestService = CLIENT.getService(UserRequestService.class);
         bpmnProcessService = CLIENT.getService(BpmnProcessService.class);
         gatewayRouteService = CLIENT.getService(GatewayRouteService.class);
+        auditService = CLIENT.getService(AuditService.class);
     }
 
     public static void main(final String[] args) throws Exception {
