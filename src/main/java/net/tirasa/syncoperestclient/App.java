@@ -40,6 +40,7 @@ import org.apache.syncope.common.rest.api.service.AnyObjectService;
 import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
 import org.apache.syncope.common.rest.api.service.AnyTypeService;
 import org.apache.syncope.common.rest.api.service.ApplicationService;
+import org.apache.syncope.common.rest.api.service.AuditService;
 import org.apache.syncope.common.rest.api.service.BpmnProcessService;
 import org.apache.syncope.common.rest.api.service.ConfigurationService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
@@ -189,6 +190,8 @@ public class App {
     private static UserRequestService userRequestService;
 
     private static BpmnProcessService bpmnProcessService;
+
+    private static AuditService auditService;
 
     private static AttrTO attrTO(final String schema, final String value) {
         return new AttrTO.Builder().schema(schema).value(value).build();
@@ -413,6 +416,7 @@ public class App {
         securityQuestionService = CLIENT.getService(SecurityQuestionService.class);
         userRequestService = CLIENT.getService(UserRequestService.class);
         bpmnProcessService = CLIENT.getService(BpmnProcessService.class);
+        auditService = CLIENT.getService(AuditService.class);
     }
 
     public static void main(final String[] args) {
