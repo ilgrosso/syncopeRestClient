@@ -7,14 +7,19 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 import java.util.UUID;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.syncope.client.lib.SyncopeClient;
 import org.apache.syncope.client.lib.SyncopeClientFactoryBean;
@@ -70,6 +75,8 @@ public class App {
 
     private static final String ADDRESS;
 
+    private static final TLSClientParameters TLS_CLIENT_PARAMS;
+
     static {
         final InputStream configuration = App.class.getResourceAsStream("/configuration.properties");
         final Properties prop = new Properties();
@@ -87,6 +94,26 @@ public class App {
                 }
             }
         }
+
+        TLS_CLIENT_PARAMS = new TLSClientParameters();
+        TLS_CLIENT_PARAMS.setTrustManagers(new TrustManager[] { new X509TrustManager() {
+
+            @Override
+            public void checkClientTrusted(final X509Certificate[] chain, final String authType)
+                    throws CertificateException {
+            }
+
+            @Override
+            public void checkServerTrusted(final X509Certificate[] chain, final String authType)
+                    throws CertificateException {
+            }
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+        } });
+        TLS_CLIENT_PARAMS.setDisableCNCheck(true);
     }
 
     private static final String ADMIN_UNAME = "admin";
@@ -97,7 +124,8 @@ public class App {
 
     private static final String ANONYMOUS_KEY = "anonymousKey";
 
-    private static final SyncopeClientFactoryBean CLIENT_FACTORY = new SyncopeClientFactoryBean().setAddress(ADDRESS);
+    private static final SyncopeClientFactoryBean CLIENT_FACTORY = new SyncopeClientFactoryBean().
+            setAddress(ADDRESS).setTlsClientParameters(TLS_CLIENT_PARAMS);
 
     private static final SyncopeClient CLIENT = CLIENT_FACTORY.create(ADMIN_UNAME, ADMIN_PWD);
 
