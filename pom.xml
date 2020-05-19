@@ -9,7 +9,7 @@
   <name>syncope-rest-client</name>
 
   <properties>
-    <syncope.version>2.1.6-SNAPSHOT</syncope.version>
+    <syncope.version>2.1.7-SNAPSHOT</syncope.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -34,7 +34,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>5.6.0</version>
+      <version>5.6.2</version>
     </dependency>
   </dependencies>
 
