@@ -7,12 +7,14 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.http.HttpHeaders;
 import java.util.Date;
 import java.util.Properties;
 import java.util.UUID;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.xml.ws.Response;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.syncope.client.lib.SyncopeClient;
@@ -41,9 +43,11 @@ import org.apache.syncope.common.rest.api.service.AnyObjectService;
 import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
 import org.apache.syncope.common.rest.api.service.AnyTypeService;
 import org.apache.syncope.common.rest.api.service.ApplicationService;
-import org.apache.syncope.common.rest.api.service.AuditService;
+import org.apache.syncope.common.rest.api.service.AuthModuleService;
 import org.apache.syncope.common.rest.api.service.BpmnProcessService;
+import org.apache.syncope.common.rest.api.service.ClientAppService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
+import org.apache.syncope.common.rest.api.service.DynRealmService;
 import org.apache.syncope.common.rest.api.service.GatewayRouteService;
 import org.apache.syncope.common.rest.api.service.LoggerService;
 import org.apache.syncope.common.rest.api.service.NotificationService;
@@ -56,8 +60,12 @@ import org.apache.syncope.common.rest.api.service.MailTemplateService;
 import org.apache.syncope.common.rest.api.service.RealmService;
 import org.apache.syncope.common.rest.api.service.ReconciliationService;
 import org.apache.syncope.common.rest.api.service.RelationshipTypeService;
+import org.apache.syncope.common.rest.api.service.RemediationService;
 import org.apache.syncope.common.rest.api.service.ReportTemplateService;
 import org.apache.syncope.common.rest.api.service.RoleService;
+import org.apache.syncope.common.rest.api.service.SAML2IdPMetadataConfService;
+import org.apache.syncope.common.rest.api.service.SAML2SPKeystoreConfService;
+import org.apache.syncope.common.rest.api.service.SAML2SPMetadataConfService;
 import org.apache.syncope.common.rest.api.service.SchemaService;
 import org.apache.syncope.common.rest.api.service.SecurityQuestionService;
 import org.apache.syncope.common.rest.api.service.SyncopeService;
@@ -65,6 +73,10 @@ import org.apache.syncope.common.rest.api.service.TaskService;
 import org.apache.syncope.common.rest.api.service.UserRequestService;
 import org.apache.syncope.common.rest.api.service.UserSelfService;
 import org.apache.syncope.common.rest.api.service.UserService;
+import org.apache.syncope.common.rest.api.service.UserWorkflowTaskService;
+import org.apache.syncope.common.rest.api.service.wa.SAML2IdPMetadataService;
+import org.apache.syncope.common.rest.api.service.wa.SAML2SPKeystoreService;
+import org.apache.syncope.common.rest.api.service.wa.SAML2SPMetadataService;
 
 public class App {
 
@@ -139,8 +151,6 @@ public class App {
 
     private static ApplicationService applicationService;
 
-    private static ImplementationService implementationService;
-
     private static AnyTypeClassService anyTypeClassService;
 
     private static AnyTypeService anyTypeService;
@@ -153,7 +163,15 @@ public class App {
 
     private static RoleService roleService;
 
+    private static DynRealmService dynRealmService;
+
     private static UserService userService;
+
+    private static UserSelfService userSelfService;
+
+    private static UserRequestService userRequestService;
+
+    private static UserWorkflowTaskService userWorkflowTaskService;
 
     private static GroupService groupService;
 
@@ -171,25 +189,39 @@ public class App {
 
     private static ReconciliationService reconciliationService;
 
+    private static BpmnProcessService bpmnProcessService;
+
     private static MailTemplateService mailTemplateService;
 
     private static NotificationService notificationService;
 
     private static SchemaService schemaService;
 
-    private static UserSelfService userSelfService;
-
     private static PolicyService policyService;
+
+    private static AuthModuleService authModuleService;
+
+    private static SAML2SPMetadataService saml2SPMetadataService;
+
+    private static SAML2SPMetadataConfService saml2SPMetadataConfService;
+
+    private static SAML2SPKeystoreService saml2SPKeystoreService;
+
+    private static SAML2SPKeystoreConfService saml2SPKeystoreConfService;
+
+    private static SAML2IdPMetadataService saml2IdPMetadataService;
+
+    private static SAML2IdPMetadataConfService saml2IdPMetadataConfService;
 
     private static SecurityQuestionService securityQuestionService;
 
-    private static UserRequestService userRequestService;
+    private static ImplementationService implementationService;
 
-    private static BpmnProcessService bpmnProcessService;
+    private static RemediationService remediationService;
 
     private static GatewayRouteService gatewayRouteService;
 
-    private static AuditService auditService;
+    private static ClientAppService clientAppService;
 
     private static Attr attr(final String schema, final String value) {
         return new Attr.Builder(schema).value(value).build();
@@ -375,19 +407,23 @@ public class App {
     }
 
     private static void init() {
-        CLIENT_FACTORY = new SyncopeClientFactoryBean().setAddress(ADDRESS);
+        CLIENT_FACTORY = new SyncopeClientFactoryBean().setAddress(ADDRESS).
+                setContentType(SyncopeClientFactoryBean.ContentType.YAML);
         CLIENT = CLIENT_FACTORY.create(ADMIN_UNAME, ADMIN_PWD);
 
         syncopeService = CLIENT.getService(SyncopeService.class);
         applicationService = CLIENT.getService(ApplicationService.class);
-        implementationService = CLIENT.getService(ImplementationService.class);
         anyTypeClassService = CLIENT.getService(AnyTypeClassService.class);
         anyTypeService = CLIENT.getService(AnyTypeService.class);
         relationshipTypeService = CLIENT.getService(RelationshipTypeService.class);
         realmService = CLIENT.getService(RealmService.class);
         anyObjectService = CLIENT.getService(AnyObjectService.class);
         roleService = CLIENT.getService(RoleService.class);
+        dynRealmService = CLIENT.getService(DynRealmService.class);
         userService = CLIENT.getService(UserService.class);
+        userSelfService = CLIENT.getService(UserSelfService.class);
+        userRequestService = CLIENT.getService(UserRequestService.class);
+        userWorkflowTaskService = CLIENT.getService(UserWorkflowTaskService.class);
         groupService = CLIENT.getService(GroupService.class);
         resourceService = CLIENT.getService(ResourceService.class);
         connectorService = CLIENT.getService(ConnectorService.class);
@@ -397,15 +433,22 @@ public class App {
         taskService = CLIENT.getService(TaskService.class);
         reconciliationService = CLIENT.getService(ReconciliationService.class);
         policyService = CLIENT.getService(PolicyService.class);
+        bpmnProcessService = CLIENT.getService(BpmnProcessService.class);
         mailTemplateService = CLIENT.getService(MailTemplateService.class);
         notificationService = CLIENT.getService(NotificationService.class);
         schemaService = CLIENT.getService(SchemaService.class);
-        userSelfService = CLIENT.getService(UserSelfService.class);
         securityQuestionService = CLIENT.getService(SecurityQuestionService.class);
-        userRequestService = CLIENT.getService(UserRequestService.class);
-        bpmnProcessService = CLIENT.getService(BpmnProcessService.class);
+        implementationService = CLIENT.getService(ImplementationService.class);
+        remediationService = CLIENT.getService(RemediationService.class);
         gatewayRouteService = CLIENT.getService(GatewayRouteService.class);
-        auditService = CLIENT.getService(AuditService.class);
+        clientAppService = CLIENT.getService(ClientAppService.class);
+        authModuleService = CLIENT.getService(AuthModuleService.class);
+        saml2SPMetadataService = CLIENT.getService(SAML2SPMetadataService.class);
+        saml2SPMetadataConfService = CLIENT.getService(SAML2SPMetadataConfService.class);
+        saml2IdPMetadataService = CLIENT.getService(SAML2IdPMetadataService.class);
+        saml2IdPMetadataConfService = CLIENT.getService(SAML2IdPMetadataConfService.class);
+        saml2SPKeystoreService = CLIENT.getService(SAML2SPKeystoreService.class);
+        saml2SPKeystoreConfService = CLIENT.getService(SAML2SPKeystoreConfService.class);
     }
 
     public static void main(final String[] args) throws Exception {
