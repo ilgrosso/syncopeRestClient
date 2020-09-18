@@ -7,14 +7,12 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.http.HttpHeaders;
 import java.util.Date;
 import java.util.Properties;
 import java.util.UUID;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import javax.xml.ws.Response;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.syncope.client.lib.SyncopeClient;
@@ -44,11 +42,11 @@ import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
 import org.apache.syncope.common.rest.api.service.AnyTypeService;
 import org.apache.syncope.common.rest.api.service.ApplicationService;
 import org.apache.syncope.common.rest.api.service.AuthModuleService;
+import org.apache.syncope.common.rest.api.service.AuthProfileService;
 import org.apache.syncope.common.rest.api.service.BpmnProcessService;
 import org.apache.syncope.common.rest.api.service.ClientAppService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
 import org.apache.syncope.common.rest.api.service.DynRealmService;
-import org.apache.syncope.common.rest.api.service.GatewayRouteService;
 import org.apache.syncope.common.rest.api.service.LoggerService;
 import org.apache.syncope.common.rest.api.service.NotificationService;
 import org.apache.syncope.common.rest.api.service.PolicyService;
@@ -57,15 +55,17 @@ import org.apache.syncope.common.rest.api.service.ResourceService;
 import org.apache.syncope.common.rest.api.service.GroupService;
 import org.apache.syncope.common.rest.api.service.ImplementationService;
 import org.apache.syncope.common.rest.api.service.MailTemplateService;
+import org.apache.syncope.common.rest.api.service.OIDCJWKSService;
 import org.apache.syncope.common.rest.api.service.RealmService;
 import org.apache.syncope.common.rest.api.service.ReconciliationService;
 import org.apache.syncope.common.rest.api.service.RelationshipTypeService;
 import org.apache.syncope.common.rest.api.service.RemediationService;
 import org.apache.syncope.common.rest.api.service.ReportTemplateService;
 import org.apache.syncope.common.rest.api.service.RoleService;
-import org.apache.syncope.common.rest.api.service.SAML2IdPMetadataConfService;
-import org.apache.syncope.common.rest.api.service.SAML2SPKeystoreConfService;
-import org.apache.syncope.common.rest.api.service.SAML2SPMetadataConfService;
+import org.apache.syncope.common.rest.api.service.SAML2IdPMetadataService;
+import org.apache.syncope.common.rest.api.service.SAML2SPKeystoreService;
+import org.apache.syncope.common.rest.api.service.SAML2SPMetadataService;
+import org.apache.syncope.common.rest.api.service.SRARouteService;
 import org.apache.syncope.common.rest.api.service.SchemaService;
 import org.apache.syncope.common.rest.api.service.SecurityQuestionService;
 import org.apache.syncope.common.rest.api.service.SyncopeService;
@@ -74,9 +74,10 @@ import org.apache.syncope.common.rest.api.service.UserRequestService;
 import org.apache.syncope.common.rest.api.service.UserSelfService;
 import org.apache.syncope.common.rest.api.service.UserService;
 import org.apache.syncope.common.rest.api.service.UserWorkflowTaskService;
-import org.apache.syncope.common.rest.api.service.wa.SAML2IdPMetadataService;
-import org.apache.syncope.common.rest.api.service.wa.SAML2SPKeystoreService;
-import org.apache.syncope.common.rest.api.service.wa.SAML2SPMetadataService;
+import org.apache.syncope.common.rest.api.service.wa.GoogleMfaAuthAccountService;
+import org.apache.syncope.common.rest.api.service.wa.GoogleMfaAuthTokenService;
+import org.apache.syncope.common.rest.api.service.wa.U2FRegistrationService;
+import org.apache.syncope.common.rest.api.service.wa.WAConfigService;
 
 public class App {
 
@@ -147,81 +148,87 @@ public class App {
 
     private static SyncopeClient CLIENT;
 
-    private static SyncopeService syncopeService;
+    protected static SyncopeService syncopeService;
 
-    private static ApplicationService applicationService;
+    protected static ApplicationService applicationService;
 
-    private static AnyTypeClassService anyTypeClassService;
+    protected static AnyTypeClassService anyTypeClassService;
 
-    private static AnyTypeService anyTypeService;
+    protected static AnyTypeService anyTypeService;
 
-    private static RelationshipTypeService relationshipTypeService;
+    protected static RelationshipTypeService relationshipTypeService;
 
-    private static RealmService realmService;
+    protected static RealmService realmService;
 
-    private static AnyObjectService anyObjectService;
+    protected static AnyObjectService anyObjectService;
 
-    private static RoleService roleService;
+    protected static RoleService roleService;
 
-    private static DynRealmService dynRealmService;
+    protected static DynRealmService dynRealmService;
 
-    private static UserService userService;
+    protected static UserService userService;
 
-    private static UserSelfService userSelfService;
+    protected static UserSelfService userSelfService;
 
-    private static UserRequestService userRequestService;
+    protected static UserRequestService userRequestService;
 
-    private static UserWorkflowTaskService userWorkflowTaskService;
+    protected static UserWorkflowTaskService userWorkflowTaskService;
 
-    private static GroupService groupService;
+    protected static GroupService groupService;
 
-    private static ResourceService resourceService;
+    protected static ResourceService resourceService;
 
-    private static ConnectorService connectorService;
+    protected static ConnectorService connectorService;
 
-    private static LoggerService loggerService;
+    protected static LoggerService loggerService;
 
-    private static ReportTemplateService reportTemplateService;
+    protected static ReportTemplateService reportTemplateService;
 
-    private static ReportService reportService;
+    protected static ReportService reportService;
 
-    private static TaskService taskService;
+    protected static TaskService taskService;
 
-    private static ReconciliationService reconciliationService;
+    protected static ReconciliationService reconciliationService;
 
-    private static BpmnProcessService bpmnProcessService;
+    protected static BpmnProcessService bpmnProcessService;
 
-    private static MailTemplateService mailTemplateService;
+    protected static MailTemplateService mailTemplateService;
 
-    private static NotificationService notificationService;
+    protected static NotificationService notificationService;
 
-    private static SchemaService schemaService;
+    protected static SchemaService schemaService;
 
-    private static PolicyService policyService;
+    protected static PolicyService policyService;
 
-    private static AuthModuleService authModuleService;
+    protected static AuthModuleService authModuleService;
 
-    private static SAML2SPMetadataService saml2SPMetadataService;
+    protected static SecurityQuestionService securityQuestionService;
 
-    private static SAML2SPMetadataConfService saml2SPMetadataConfService;
+    protected static ImplementationService implementationService;
 
-    private static SAML2SPKeystoreService saml2SPKeystoreService;
+    protected static RemediationService remediationService;
 
-    private static SAML2SPKeystoreConfService saml2SPKeystoreConfService;
+    protected static SRARouteService sraRouteService;
 
-    private static SAML2IdPMetadataService saml2IdPMetadataService;
+    protected static ClientAppService clientAppService;
 
-    private static SAML2IdPMetadataConfService saml2IdPMetadataConfService;
+    protected static GoogleMfaAuthTokenService googleMfaAuthTokenService;
 
-    private static SecurityQuestionService securityQuestionService;
+    protected static GoogleMfaAuthAccountService googleMfaAuthAccountService;
 
-    private static ImplementationService implementationService;
+    protected static AuthProfileService authProfileService;
 
-    private static RemediationService remediationService;
+    protected static SAML2SPMetadataService saml2SPMetadataService;
 
-    private static GatewayRouteService gatewayRouteService;
+    protected static SAML2SPKeystoreService saml2SPKeystoreService;
 
-    private static ClientAppService clientAppService;
+    protected static SAML2IdPMetadataService saml2IdPMetadataService;
+
+    protected static OIDCJWKSService oidcJWKSService;
+
+    protected static U2FRegistrationService u2FRegistrationService;
+
+    protected static WAConfigService waConfigService;
 
     private static Attr attr(final String schema, final String value) {
         return new Attr.Builder(schema).value(value).build();
@@ -440,15 +447,18 @@ public class App {
         securityQuestionService = CLIENT.getService(SecurityQuestionService.class);
         implementationService = CLIENT.getService(ImplementationService.class);
         remediationService = CLIENT.getService(RemediationService.class);
-        gatewayRouteService = CLIENT.getService(GatewayRouteService.class);
+        sraRouteService = CLIENT.getService(SRARouteService.class);
         clientAppService = CLIENT.getService(ClientAppService.class);
         authModuleService = CLIENT.getService(AuthModuleService.class);
         saml2SPMetadataService = CLIENT.getService(SAML2SPMetadataService.class);
-        saml2SPMetadataConfService = CLIENT.getService(SAML2SPMetadataConfService.class);
         saml2IdPMetadataService = CLIENT.getService(SAML2IdPMetadataService.class);
-        saml2IdPMetadataConfService = CLIENT.getService(SAML2IdPMetadataConfService.class);
         saml2SPKeystoreService = CLIENT.getService(SAML2SPKeystoreService.class);
-        saml2SPKeystoreConfService = CLIENT.getService(SAML2SPKeystoreConfService.class);
+        googleMfaAuthTokenService = CLIENT.getService(GoogleMfaAuthTokenService.class);
+        googleMfaAuthAccountService = CLIENT.getService(GoogleMfaAuthAccountService.class);
+        authProfileService = CLIENT.getService(AuthProfileService.class);
+        oidcJWKSService = CLIENT.getService(OIDCJWKSService.class);
+        u2FRegistrationService = CLIENT.getService(U2FRegistrationService.class);
+        waConfigService = CLIENT.getService(WAConfigService.class);
     }
 
     public static void main(final String[] args) throws Exception {
