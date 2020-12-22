@@ -9,7 +9,7 @@
   <name>syncope-rest-client</name>
 
   <properties>
-    <syncope.version>2.1.8-SNAPSHOT</syncope.version>
+    <syncope.version>2.1.9-SNAPSHOT</syncope.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
