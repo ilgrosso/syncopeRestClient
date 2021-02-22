@@ -14,7 +14,9 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.cxf.transport.https.InsecureTrustManager;
 import org.apache.syncope.client.lib.SyncopeClient;
 import org.apache.syncope.client.lib.SyncopeClientFactoryBean;
 import org.apache.syncope.common.lib.Attr;
@@ -416,6 +418,12 @@ public class App {
     private static void init() {
         CLIENT_FACTORY = new SyncopeClientFactoryBean().setAddress(ADDRESS).
                 setContentType(SyncopeClientFactoryBean.ContentType.YAML);
+
+        TLSClientParameters tlsClientParameters = new TLSClientParameters();
+        tlsClientParameters.setTrustManagers(InsecureTrustManager.getNoOpX509TrustManagers());
+        tlsClientParameters.setDisableCNCheck(true);
+        CLIENT_FACTORY.setTlsClientParameters(tlsClientParameters);
+
         CLIENT = CLIENT_FACTORY.create(ADMIN_UNAME, ADMIN_PWD);
 
         syncopeService = CLIENT.getService(SyncopeService.class);
