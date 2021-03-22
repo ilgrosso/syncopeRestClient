@@ -254,20 +254,17 @@ public class App {
         return anyObjectTO;
     }
 
-    private static GroupTO getBasicSampleGroupTO(final String name) {
-        final GroupTO groupTO = new GroupTO();
-        groupTO.setName(name + getUUIDString());
-        groupTO.setRealm(SyncopeConstants.ROOT_REALM);
-        return groupTO;
+    private static GroupCR getBasicSampleGroupCR(final String name) {
+        return new GroupCR.Builder(SyncopeConstants.ROOT_REALM, name + getUUIDString()).build();
     }
 
-    private static GroupTO getSampleGroupTO(final String name) {
-        final GroupTO groupTO = getBasicSampleGroupTO(name);
+    private static GroupCR getSampleGroupCR(final String name) {
+        GroupCR groupCR = getBasicSampleGroupCR(name);
 
-        groupTO.getPlainAttrs().add(attr("icon", "anIcon"));
+        groupCR.getPlainAttrs().add(attr("icon", "anIcon"));
 
-        groupTO.getResources().add(RESOURCE_NAME_LDAP);
-        return groupTO;
+        groupCR.getResources().add(RESOURCE_NAME_LDAP);
+        return groupCR;
     }
 
     public static UserCR getSampleUserCR(final String email) {
