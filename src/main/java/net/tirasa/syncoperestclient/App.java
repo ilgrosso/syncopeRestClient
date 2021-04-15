@@ -64,9 +64,6 @@ import org.apache.syncope.common.rest.api.service.RelationshipTypeService;
 import org.apache.syncope.common.rest.api.service.RemediationService;
 import org.apache.syncope.common.rest.api.service.ReportTemplateService;
 import org.apache.syncope.common.rest.api.service.RoleService;
-import org.apache.syncope.common.rest.api.service.SAML2IdPMetadataService;
-import org.apache.syncope.common.rest.api.service.SAML2SPKeystoreService;
-import org.apache.syncope.common.rest.api.service.SAML2SPMetadataService;
 import org.apache.syncope.common.rest.api.service.SRARouteService;
 import org.apache.syncope.common.rest.api.service.SchemaService;
 import org.apache.syncope.common.rest.api.service.SecurityQuestionService;
@@ -80,6 +77,8 @@ import org.apache.syncope.common.rest.api.service.wa.GoogleMfaAuthAccountService
 import org.apache.syncope.common.rest.api.service.wa.GoogleMfaAuthTokenService;
 import org.apache.syncope.common.rest.api.service.wa.U2FRegistrationService;
 import org.apache.syncope.common.rest.api.service.wa.WAConfigService;
+import org.apache.syncope.common.rest.api.service.SAML2SPEntityService;
+import org.apache.syncope.common.rest.api.service.SAML2IdPEntityService;
 
 public class App {
 
@@ -220,11 +219,9 @@ public class App {
 
     protected static AuthProfileService authProfileService;
 
-    protected static SAML2SPMetadataService saml2SPMetadataService;
+    protected static SAML2SPEntityService saml2SPEntityService;
 
-    protected static SAML2SPKeystoreService saml2SPKeystoreService;
-
-    protected static SAML2IdPMetadataService saml2IdPMetadataService;
+    protected static SAML2IdPEntityService saml2IdPEntityService;
 
     protected static OIDCJWKSService oidcJWKSService;
 
@@ -455,9 +452,8 @@ public class App {
         sraRouteService = CLIENT.getService(SRARouteService.class);
         clientAppService = CLIENT.getService(ClientAppService.class);
         authModuleService = CLIENT.getService(AuthModuleService.class);
-        saml2SPMetadataService = CLIENT.getService(SAML2SPMetadataService.class);
-        saml2IdPMetadataService = CLIENT.getService(SAML2IdPMetadataService.class);
-        saml2SPKeystoreService = CLIENT.getService(SAML2SPKeystoreService.class);
+        saml2SPEntityService = CLIENT.getService(SAML2SPEntityService.class);
+        saml2IdPEntityService = CLIENT.getService(SAML2IdPEntityService.class);
         googleMfaAuthTokenService = CLIENT.getService(GoogleMfaAuthTokenService.class);
         googleMfaAuthAccountService = CLIENT.getService(GoogleMfaAuthAccountService.class);
         authProfileService = CLIENT.getService(AuthProfileService.class);
