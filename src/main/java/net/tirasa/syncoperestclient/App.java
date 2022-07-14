@@ -7,13 +7,13 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Date;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 import java.util.UUID;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.https.InsecureTrustManager;
@@ -38,7 +38,7 @@ import org.apache.syncope.common.lib.to.UserTO;
 import org.apache.syncope.common.lib.types.SchemaType;
 import org.apache.syncope.common.lib.types.TaskType;
 import org.apache.syncope.common.rest.api.RESTHeaders;
-import org.apache.syncope.common.rest.api.beans.ExecuteQuery;
+import org.apache.syncope.common.rest.api.beans.ExecSpecs;
 import org.apache.syncope.common.rest.api.service.AnyObjectService;
 import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
 import org.apache.syncope.common.rest.api.service.AnyTypeService;
@@ -49,7 +49,6 @@ import org.apache.syncope.common.rest.api.service.BpmnProcessService;
 import org.apache.syncope.common.rest.api.service.ClientAppService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
 import org.apache.syncope.common.rest.api.service.DynRealmService;
-import org.apache.syncope.common.rest.api.service.LoggerService;
 import org.apache.syncope.common.rest.api.service.NotificationService;
 import org.apache.syncope.common.rest.api.service.PolicyService;
 import org.apache.syncope.common.rest.api.service.ReportService;
@@ -181,8 +180,6 @@ public class App {
 
     protected static ConnectorService connectorService;
 
-    protected static LoggerService loggerService;
-
     protected static ReportTemplateService reportTemplateService;
 
     protected static ReportService reportService;
@@ -273,7 +270,7 @@ public class App {
                 plainAttr(attr("ctype", "a type")).
                 plainAttr(attr("userId", email)).
                 plainAttr(attr("email", email)).
-                plainAttr(attr("loginDate", DateFormatUtils.ISO_8601_EXTENDED_DATETIME_FORMAT.format(new Date()))).
+                plainAttr(attr("loginDate", DateTimeFormatter.ISO_LOCAL_DATE.format(OffsetDateTime.now()))).
                 build();
     }
 
@@ -291,7 +288,7 @@ public class App {
 
         int preSyncSize = taskTO.getExecutions().size();
         ExecTO execution = taskService.execute(
-                new ExecuteQuery.Builder().key(taskTO.getKey()).dryRun(dryRun).build());
+                new ExecSpecs.Builder().key(taskTO.getKey()).dryRun(dryRun).build());
         assertEquals("JOB_FIRED", execution.getStatus());
 
         int i = 0;
@@ -436,7 +433,6 @@ public class App {
         groupService = CLIENT.getService(GroupService.class);
         resourceService = CLIENT.getService(ResourceService.class);
         connectorService = CLIENT.getService(ConnectorService.class);
-        loggerService = CLIENT.getService(LoggerService.class);
         reportTemplateService = CLIENT.getService(ReportTemplateService.class);
         reportService = CLIENT.getService(ReportService.class);
         taskService = CLIENT.getService(TaskService.class);
