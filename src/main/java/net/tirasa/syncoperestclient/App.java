@@ -40,7 +40,7 @@ import org.apache.syncope.common.lib.types.PatchOperation;
 import org.apache.syncope.common.lib.types.SchemaType;
 import org.apache.syncope.common.lib.types.TaskType;
 import org.apache.syncope.common.rest.api.RESTHeaders;
-import org.apache.syncope.common.rest.api.beans.ExecuteQuery;
+import org.apache.syncope.common.rest.api.beans.ExecSpecs;
 import org.apache.syncope.common.rest.api.service.AnyObjectService;
 import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
 import org.apache.syncope.common.rest.api.service.AnyTypeService;
@@ -289,8 +289,7 @@ public class App {
         assertNotNull(taskTO.getExecutions());
 
         int preSyncSize = taskTO.getExecutions().size();
-        ExecTO execution = taskService.execute(
-                new ExecuteQuery.Builder().key(taskTO.getKey()).dryRun(dryRun).build());
+        ExecTO execution = taskService.execute(new ExecSpecs.Builder().key(taskTO.getKey()).dryRun(dryRun).build());
         assertEquals("JOB_FIRED", execution.getStatus());
 
         int i = 0;
