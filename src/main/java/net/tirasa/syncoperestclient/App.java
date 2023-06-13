@@ -61,7 +61,6 @@ import org.apache.syncope.common.rest.api.service.RealmService;
 import org.apache.syncope.common.rest.api.service.ReconciliationService;
 import org.apache.syncope.common.rest.api.service.RelationshipTypeService;
 import org.apache.syncope.common.rest.api.service.RemediationService;
-import org.apache.syncope.common.rest.api.service.ReportTemplateService;
 import org.apache.syncope.common.rest.api.service.RoleService;
 import org.apache.syncope.common.rest.api.service.SRARouteService;
 import org.apache.syncope.common.rest.api.service.SchemaService;
@@ -179,8 +178,6 @@ public class App {
     protected static ResourceService resourceService;
 
     protected static ConnectorService connectorService;
-
-    protected static ReportTemplateService reportTemplateService;
 
     protected static ReportService reportService;
 
@@ -433,7 +430,6 @@ public class App {
         groupService = CLIENT.getService(GroupService.class);
         resourceService = CLIENT.getService(ResourceService.class);
         connectorService = CLIENT.getService(ConnectorService.class);
-        reportTemplateService = CLIENT.getService(ReportTemplateService.class);
         reportService = CLIENT.getService(ReportService.class);
         taskService = CLIENT.getService(TaskService.class);
         reconciliationService = CLIENT.getService(ReconciliationService.class);
