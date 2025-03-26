@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -11,9 +14,6 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 import java.util.UUID;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.https.InsecureTrustManager;
@@ -42,7 +42,6 @@ import org.apache.syncope.common.rest.api.beans.ExecSpecs;
 import org.apache.syncope.common.rest.api.service.AnyObjectService;
 import org.apache.syncope.common.rest.api.service.AnyTypeClassService;
 import org.apache.syncope.common.rest.api.service.AnyTypeService;
-import org.apache.syncope.common.rest.api.service.ApplicationService;
 import org.apache.syncope.common.rest.api.service.AuthModuleService;
 import org.apache.syncope.common.rest.api.service.AuthProfileService;
 import org.apache.syncope.common.rest.api.service.BpmnProcessService;
@@ -73,7 +72,6 @@ import org.apache.syncope.common.rest.api.service.UserService;
 import org.apache.syncope.common.rest.api.service.UserWorkflowTaskService;
 import org.apache.syncope.common.rest.api.service.wa.GoogleMfaAuthAccountService;
 import org.apache.syncope.common.rest.api.service.wa.GoogleMfaAuthTokenService;
-import org.apache.syncope.common.rest.api.service.wa.U2FRegistrationService;
 import org.apache.syncope.common.rest.api.service.wa.WAConfigService;
 import org.apache.syncope.common.rest.api.service.SAML2SPEntityService;
 import org.apache.syncope.common.rest.api.service.SAML2IdPEntityService;
@@ -149,8 +147,6 @@ public class App {
 
     protected static SyncopeService syncopeService;
 
-    protected static ApplicationService applicationService;
-
     protected static AnyTypeClassService anyTypeClassService;
 
     protected static AnyTypeService anyTypeService;
@@ -218,8 +214,6 @@ public class App {
     protected static SAML2IdPEntityService saml2IdPEntityService;
 
     protected static OIDCJWKSService oidcJWKSService;
-
-    protected static U2FRegistrationService u2FRegistrationService;
 
     protected static WAConfigService waConfigService;
 
@@ -405,7 +399,7 @@ public class App {
 
     private static void init() {
         CLIENT_FACTORY = new SyncopeClientFactoryBean().setAddress(ADDRESS).
-                setContentType(SyncopeClientFactoryBean.ContentType.YAML);
+                setContentType(SyncopeClientFactoryBean.ContentType.JSON);
 
         TLSClientParameters tlsClientParameters = new TLSClientParameters();
         tlsClientParameters.setTrustManagers(InsecureTrustManager.getNoOpX509TrustManagers());
@@ -415,7 +409,6 @@ public class App {
         CLIENT = CLIENT_FACTORY.create(ADMIN_UNAME, ADMIN_PWD);
 
         syncopeService = CLIENT.getService(SyncopeService.class);
-        applicationService = CLIENT.getService(ApplicationService.class);
         anyTypeClassService = CLIENT.getService(AnyTypeClassService.class);
         anyTypeService = CLIENT.getService(AnyTypeService.class);
         relationshipTypeService = CLIENT.getService(RelationshipTypeService.class);
@@ -450,7 +443,6 @@ public class App {
         googleMfaAuthAccountService = CLIENT.getService(GoogleMfaAuthAccountService.class);
         authProfileService = CLIENT.getService(AuthProfileService.class);
         oidcJWKSService = CLIENT.getService(OIDCJWKSService.class);
-        u2FRegistrationService = CLIENT.getService(U2FRegistrationService.class);
         waConfigService = CLIENT.getService(WAConfigService.class);
     }
 

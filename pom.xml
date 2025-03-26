@@ -5,11 +5,11 @@
   <groupId>net.tirasa.syncope</groupId>
   <artifactId>syncope-rest-client</artifactId>
   <packaging>jar</packaging>
-  <version>3.0-SNAPSHOT</version>
+  <version>4.0-SNAPSHOT</version>
   <name>syncope-rest-client</name>
 
   <properties>
-    <syncope.version>3.0.12-SNAPSHOT</syncope.version>
+    <syncope.version>4.0.0-SNAPSHOT</syncope.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -33,7 +33,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>1.7.36</version>
+      <version>2.0.17</version>
     </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
@@ -45,7 +45,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>5.11.4</version>
+      <version>5.12.1</version>
     </dependency>
   </dependencies>
 
@@ -56,7 +56,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.14.0</version>
         <configuration>
-          <release>11</release>
+          <release>21</release>
         </configuration>
       </plugin>
     </plugins>
