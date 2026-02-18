@@ -73,7 +73,6 @@ import org.apache.syncope.common.rest.api.service.UserWorkflowTaskService;
 import org.apache.syncope.common.rest.api.service.wa.GoogleMfaAuthAccountService;
 import org.apache.syncope.common.rest.api.service.wa.GoogleMfaAuthTokenService;
 import org.apache.syncope.common.rest.api.service.wa.WAConfigService;
-import org.apache.syncope.common.rest.api.service.SAML2SPEntityService;
 import org.apache.syncope.common.rest.api.service.SAML2IdPEntityService;
 
 public class App {
@@ -209,8 +208,6 @@ public class App {
 
     protected static AuthProfileService authProfileService;
 
-    protected static SAML2SPEntityService saml2SPEntityService;
-
     protected static SAML2IdPEntityService saml2IdPEntityService;
 
     protected static OIDCJWKSService oidcJWKSService;
@@ -311,7 +308,7 @@ public class App {
 
         return webClient.
                 header(RESTHeaders.DOMAIN, CLIENT.getDomain()).
-                header(HttpHeaders.AUTHORIZATION, "Bearer " + CLIENT.getJWT()).
+                header(HttpHeaders.AUTHORIZATION, "Bearer " + CLIENT.jwtInfo().orElseThrow().value()).
                 get(resultClass);
     }
 
@@ -437,7 +434,6 @@ public class App {
         sraRouteService = CLIENT.getService(SRARouteService.class);
         clientAppService = CLIENT.getService(ClientAppService.class);
         authModuleService = CLIENT.getService(AuthModuleService.class);
-        saml2SPEntityService = CLIENT.getService(SAML2SPEntityService.class);
         saml2IdPEntityService = CLIENT.getService(SAML2IdPEntityService.class);
         googleMfaAuthTokenService = CLIENT.getService(GoogleMfaAuthTokenService.class);
         googleMfaAuthAccountService = CLIENT.getService(GoogleMfaAuthAccountService.class);
