@@ -47,7 +47,6 @@ import org.apache.syncope.common.rest.api.service.AuthProfileService;
 import org.apache.syncope.common.rest.api.service.BpmnProcessService;
 import org.apache.syncope.common.rest.api.service.ClientAppService;
 import org.apache.syncope.common.rest.api.service.ConnectorService;
-import org.apache.syncope.common.rest.api.service.DynRealmService;
 import org.apache.syncope.common.rest.api.service.NotificationService;
 import org.apache.syncope.common.rest.api.service.PolicyService;
 import org.apache.syncope.common.rest.api.service.ReportService;
@@ -157,8 +156,6 @@ public class App {
     protected static AnyObjectService anyObjectService;
 
     protected static RoleService roleService;
-
-    protected static DynRealmService dynRealmService;
 
     protected static UserService userService;
 
@@ -303,10 +300,8 @@ public class App {
     }
 
     private static <T> T getObject(final URI location, final Class<?> serviceClass, final Class<T> resultClass) {
-        WebClient webClient = WebClient.fromClient(WebClient.client(CLIENT.getService(serviceClass)));
-        webClient.accept(CLIENT_FACTORY.getContentType().getMediaType()).to(location.toASCIIString(), false);
-
-        return webClient.
+        return WebClient.fromClient(WebClient.client(CLIENT.getService(serviceClass))).
+                to(location.toASCIIString(), false).
                 header(RESTHeaders.DOMAIN, CLIENT.getDomain()).
                 header(HttpHeaders.AUTHORIZATION, "Bearer " + CLIENT.jwtInfo().orElseThrow().value()).
                 get(resultClass);
@@ -395,8 +390,7 @@ public class App {
     }
 
     private static void init() {
-        CLIENT_FACTORY = new SyncopeClientFactoryBean().setAddress(ADDRESS).
-                setContentType(SyncopeClientFactoryBean.ContentType.JSON);
+        CLIENT_FACTORY = new SyncopeClientFactoryBean().setAddress(ADDRESS);
 
         TLSClientParameters tlsClientParameters = new TLSClientParameters();
         tlsClientParameters.setTrustManagers(InsecureTrustManager.getNoOpX509TrustManagers());
@@ -412,7 +406,6 @@ public class App {
         realmService = CLIENT.getService(RealmService.class);
         anyObjectService = CLIENT.getService(AnyObjectService.class);
         roleService = CLIENT.getService(RoleService.class);
-        dynRealmService = CLIENT.getService(DynRealmService.class);
         userService = CLIENT.getService(UserService.class);
         userSelfService = CLIENT.getService(UserSelfService.class);
         userRequestService = CLIENT.getService(UserRequestService.class);
